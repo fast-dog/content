@@ -1,0 +1,43 @@
+{
+  "name": "fast_dog/content",
+  "description": "Module Content for FastDog CMS",
+  "type": "project",
+  "keywords": [
+    "FastDog CMS",
+    "Laravel"
+  ],
+  "homepage": "http://fastdog.ru/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Andrey Martynov",
+      "email": "d.g.dev482@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.1.3",
+    "fideloper/proxy": "^4.0",
+    "predis/predis": "@dev"
+  },
+  "require-dev": {
+    "sentry/sentry-laravel": "^0.6.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "FastDog\\Content\\": "src"
+    }
+  },
+  "minimum-stability": "dev",
+  "extra": {
+    "laravel": {
+      "dont-discover": [
+        "*"
+      ]
+    }
+  },
+  "scripts": {
+    "post-autoload-dump": [
+
+    ]
+  }
+}
