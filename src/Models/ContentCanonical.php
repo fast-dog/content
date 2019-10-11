@@ -1,15 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 14.02.2017
- * Time: 23:36
- */
-
-namespace FastDog\Content\Entity;
+namespace FastDog\Content\Models;
 
 
-use App\Modules\Users\Entity\User;
+use FastDog\User\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Канонические ссылки
  *
- * @package FastDog\Content\Entity
+ * @package FastDog\Content\Models
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */
@@ -29,37 +22,44 @@ class ContentCanonical extends Model
      * @const string
      */
     const ITEM_ID = 'item_id';
+
     /**
      * Тип
      * @const string
      */
     const TYPE = 'type';
+
     /**
      * Ссылка
      * @const string
      */
     const LINK = 'link';
+
     /**
      * Главная
      * @const string
      * @deprecated
      */
     const IS_INDEX = 'is_index';
+
     /**
      * Код сайта
      * @const string
      */
     const SITE_ID = 'site_id';
+
     /**
      * Тип: категрия
      * @const int
      */
     const TYPE_MENU_CATEGORY_BLOG = 1;
+
     /**
      * Тип: страница материала
      * @const int
      */
     const TYPE_MENU_CONTENT = 2;
+
     /**
      * Название таблицы
      * @var string $table
@@ -68,7 +68,6 @@ class ContentCanonical extends Model
 
     /**
      * Массив полей автозаполнения
-     *
      * @var array $fillable
      */
     public $fillable = [self::ITEM_ID, self::TYPE, self::LINK, self::IS_INDEX, self::SITE_ID];
@@ -79,7 +78,7 @@ class ContentCanonical extends Model
      */
     public function check()
     {
-        return $this->hasOne('FastDog\Content\Entity\ContentCanonicalCheckResult', 'item_id', 'id');
+        return $this->hasOne('FastDog\Content\Models\ContentCanonicalCheckResult', 'item_id', 'id');
     }
 
     /**
@@ -88,7 +87,7 @@ class ContentCanonical extends Model
      */
     public function content()
     {
-        return $this->hasOne('FastDog\Content\Entity\Content', 'id', 'item_id');
+        return $this->hasOne('FastDog\Content\Models\Content', 'id', 'item_id');
     }
 
     /**
@@ -215,57 +214,5 @@ class ContentCanonical extends Model
         }
 
         return $canonicalAction;
-    }
-
-    /**
-     * Создание таблицы базы данных
-     *
-     * Будут созданы таблицы и триггеры:
-     * <pre>
-     * CREATE TABLE test_migration.content_canonical (
-     *          id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-     *          is_index tinyint(4) NOT NULL,
-     *          item_id int(11) NOT NULL,
-     *          type tinyint(4) NOT NULL,
-     *          link varchar(255) NOT NULL,
-     *          site_id char(3) NOT NULL DEFAULT '000',
-     *          created_at timestamp NULL DEFAULT NULL,
-     *          updated_at timestamp NULL DEFAULT NULL,
-     *          deleted_at timestamp NULL DEFAULT NULL,
-     *          PRIMARY KEY (id),
-     *          UNIQUE INDEX UK_content_canonical (item_id, type, link)
-     * )
-     * COMMENT = 'Канонические ссылки' ;
-     * </pre>
-     *
-     * @return void
-     */
-    public static function createDbSchema()
-    {
-        if (!Schema::hasTable('content_canonical')) {
-            Schema::create('content_canonical', function (Blueprint $table) {
-                $table->increments('id');
-                $table->tinyInteger(self::IS_INDEX);
-                $table->integer(self::ITEM_ID);
-                $table->tinyInteger(self::TYPE);
-                $table->string(self::LINK);
-                $table->char(Content::SITE_ID, 3)->default('000');
-                $table->timestamps();
-                $table->softDeletes();
-                $table->unique([self::ITEM_ID, self::TYPE, self::LINK], 'UK_content_canonical');
-            });
-            DB::statement("ALTER TABLE `content_canonical` comment 'Канонические ссылки'");
-
-            DB::unprepared("DROP FUNCTION IF EXISTS selectCountContentCanonical");
-            DB::unprepared("
-CREATE FUNCTION selectCountContentCanonical(item_id INT)
-  RETURNS int(11)
-  DETERMINISTIC
-  SQL SECURITY INVOKER
-BEGIN
-RETURN (SELECT COUNT(*) FROM content_canonical cc WHERE cc.item_id = item_id);
-END
-        ");
-        }
     }
 }

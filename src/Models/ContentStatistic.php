@@ -1,12 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 05.11.2016
- * Time: 0:36
- */
-
-namespace FastDog\Content\Entity;
+namespace FastDog\Content\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -16,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Статистика просмотров материалов
  *
- * @package FastDog\Content\Entity
+ * @package FastDog\Content\Models
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */
@@ -39,7 +32,7 @@ class ContentStatistic extends Model
     }
 
     /**
-     * Полусение статистики
+     * Получение статистики
      *
      * Метод возвращает 30 последних записей из таблицы статистики с сортировкой по уменьшению времени
      *
@@ -58,34 +51,5 @@ class ContentStatistic extends Model
         }
 
         return $result;
-    }
-
-
-    /**
-     * Создание таблицы базы данных
-     *
-     * Будут созданы таблицы и триггеры:
-     * <pre>
-     * CREATE TABLE content_statistic_views (
-     *          id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-     *          value int(11) NOT NULL,
-     *          created_at timestamp NULL DEFAULT NULL,
-     *          updated_at timestamp NULL DEFAULT NULL,
-     *          PRIMARY KEY (id)
-     * )
-     * </pre>
-     *
-     * @return void
-     */
-    public static function createDbSchema()
-    {
-        if (!Schema::hasTable('content_statistic_views')) {
-            Schema::create('content_statistic_views', function (Blueprint $table) {
-                $table->increments('id');
-                $table->integer('value');
-                $table->timestamps();
-            });
-            DB::statement("ALTER TABLE `content_statistic_views` comment 'Статистика просмотра материалов'");
-        }
     }
 }

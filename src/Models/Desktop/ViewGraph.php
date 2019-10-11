@@ -6,18 +6,18 @@
  * Time: 14:33
  */
 
-namespace FastDog\Content\Entity\Desktop;
+namespace FastDog\Content\Models\Desktop;
 
 
 use App\Core\Interfaces\DesktopWidget;
-use FastDog\Content\Entity\ContentStatistic;
+use FastDog\Content\Models\ContentStatistic;
 
 /**
  * Блок графика
  *
  * Блок графика в разделе администрирования
  *
- * @package FastDog\Content\Entity\Desktop
+ * @package FastDog\Content\Models\Desktop
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */

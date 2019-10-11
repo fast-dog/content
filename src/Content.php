@@ -2,19 +2,23 @@
 
 
 use DOMDocument;
-use FastDog\Content\Entity\Content as ContentModel;
-use FastDog\Content\Entity\ContentCanonical;
-use FastDog\Content\Entity\ContentCanonicalCheckResult;
-use FastDog\Content\Entity\ContentCategory;
-use FastDog\Content\Entity\ContentComments;
-use FastDog\Content\Entity\ContentConfig;
-use FastDog\Content\Entity\ContentStatistic;
-use FastDog\Content\Entity\ContentTag;
+use FastDog\Config\Models\Translate;
+use FastDog\Content\Models\Content as ContentModel;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Content\Models\ContentCanonicalCheckResult;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Content\Models\ContentComments;
+use FastDog\Content\Models\ContentConfig;
+use FastDog\Content\Models\ContentStatistic;
+use FastDog\Content\Models\ContentTag;
 use FastDog\Content\Http\Controllers\Site\ContentController;
+use FastDog\Core\Models\Components;
+use FastDog\Core\Models\DomainManager;
 use FastDog\Menu\Menu;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 
 /**
  * Материалы
@@ -76,344 +80,6 @@ class Content extends ContentModel
     protected $config;
 
     /**
-     * Маршруты раздела администратора
-     *
-     * @return mixed
-     */
-    public function routeAdmin()
-    {
-        $this->aclName = __CLASS__ . '::' . DomainManager::getSiteId() . '::guest';
-
-        $baseParameters = ['middleware' => ['acl'], 'is' => DomainManager::getSiteId() . '::admin',];
-
-        /**
-         * Таблица
-         */
-        \Route::post('/public/content/list', array_replace_recursive($baseParameters, [
-            'uses' => '\FastDog\Content\Controllers\Admin\ContentTableController@list',
-            'can' => 'view.' . $this->aclName,
-        ]));
-
-        /**
-         * Форма
-         */
-        $ctrl = '\FastDog\Content\Controllers\Admin\ContentFormController';
-
-        // Отдельный объект
-        \Route::get('/public/content/{id}', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getEditItem',
-            'can' => 'view.' . $this->aclName,
-        ]))->where('id', '[1-90]+');
-
-        // Обновление объекта из списка (публикаций, перемещение в корзинку)
-        \Route::post('/public/content/update', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postContentUpdate',
-            'can' => 'update.' . $this->aclName,
-        ]));
-
-        // Обновление объекта из списка (публикаций, перемещение в корзинку)
-        \Route::post('/public/content/list/self-update', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postContentUpdate',
-            'can' => 'update.' . $this->aclName,
-        ]));
-
-        // Обновлени объекта
-        \Route::post('/public/content', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postContent',
-            'can' => 'update.' . $this->aclName,
-        ]));
-
-        // Добавление материала
-        \Route::post('/public/add-content', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postContent',
-            'can' => 'update.' . $this->aclName,
-        ]));
-
-        // Копирование объекта
-        \Route::post('/public/content/replicate', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postReplicate',
-            'can' => 'create.' . $this->aclName,
-        ]));
-
-        // Удаление значения дополнительного параметра
-        \Route::post('/content/delete-select-value', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postDeleteSelectValue',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Добавление значения дополнительного параметра
-        \Route::post('/content/add-select-value', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postAddSelectValue',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Добавление\Сохранение дополнительного параметра
-        \Route::post('/content/save-property', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postSaveProperty',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        /**
-         * API
-         */
-        $ctrl = '\FastDog\Content\Controllers\Admin\ApiController';
-
-        \Route::get('/public/content/admin-info', $ctrl . '@getAdminInfo');
-
-        // Очистка кэша
-        \Route::post('/public/content/clear-cache', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postClearCache',
-            'can' => 'api.' . $this->aclName,
-        ]));
-        // Изменение разрешений для модуля
-        \Route::post('/public/content/access', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postAccess',
-            'can' => 'info.' . $this->aclName,
-        ]));
-        // Сохранение параметров модуля
-        \Route::post('/public/content/save-module-configurations', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postSaveModuleConfigurations',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Поиск канонических ссылок на материалы
-        \Route::post('/public/content/canonicals', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postCanonicals',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Страница диагностики
-        \Route::get('/public/content/diagnostic', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getDiagnostic',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Таблица проверки канонических ссылок на материалы
-        \Route::post('/public/content/check-canonical', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postCheckCanonical',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        // Проверка канонических ссылок на материалы
-        \Route::get('/public/content/check-canonical', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getCheckCanonical',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        //шаблоны редактора
-        \Route::get('/public/content/ck-templates.js', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getCkTemplates',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-        //поиск материалов
-        \Route::post('/public/content/search-list', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getPageSearch',
-            'can' => 'api.' . $this->aclName,
-        ]));
-
-
-        //поиск материалов по названию
-//        \Route::get('/public/content/search', array_replace_recursive($baseParameters, [
-//            'uses' => $ctrl . '@getSearch',
-//            'can' => 'api.' . $this->aclName,
-//        ]));
-
-        /**
-         * Категории
-         */
-        // Таблица катагорий
-        \Route::post('/public/content/category/list', array_replace_recursive($baseParameters, [
-            'uses' => '\FastDog\Content\Controllers\Admin\Category\TableController@list',
-            'can' => 'view.category.' . $this->aclName,
-        ]));
-        /**
-         * Форма
-         */
-        $ctrl = '\FastDog\Content\Controllers\Admin\Category\FormController';
-
-        // Форма редактирования категории
-        \Route::get('/public/content/category/{id}', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@getEditItem',
-            'can' => 'view.category.' . $this->aclName,
-        ]));
-
-        // Сохранение категории
-        \Route::post('/public/content/category', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postCategory',
-            'can' => 'update.category.' . $this->aclName,
-        ]));
-
-//        //обновление объекта
-        \Route::post('/public/content/category/list/self-update', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postUpdate',
-            'can' => 'update.category.' . $this->aclName,
-        ]));
-//        //создание объекта
-//        \Route::post('/public/content/category-create', array_replace_recursive($baseParameters, [
-//            'uses' => $ctrl . '@postCategory',
-//            'can' => 'create.category.' . $this->aclName,
-//        ]));
-//
-//        //копирование объекта
-//        \Route::post('/public/content/category/replicate', array_replace_recursive($baseParameters, [
-//            'uses' => $ctrl . '@postReplicate',
-//            'can' => 'create.category.' . $this->aclName,
-//        ]));
-//
-//        //обновление объекта из списка
-//        \Route::post('/public/content/category/update', array_replace_recursive($baseParameters, [
-//            'uses' => $ctrl . '@postUpdate',
-//            'can' => 'update.category.' . $this->aclName,
-//        ]));
-
-    }
-
-    /**
-     * Маршруты публичного раздела
-     *
-     * @return mixed
-     */
-    public function routePublic()
-    {
-        $key = 'content-' . DomainManager::getSiteId();
-
-        $data = (env('CACHE_DRIVER') == 'redis') ? \Cache::tags(['core'])->get($key, null) : \Cache::get($key, null);
-
-        if ($data === null) {
-            $menuItems = Menu::where(function (Builder $query) {
-                $query->where(Menu::STATE, Menu::STATE_PUBLISHED);
-                $query->where(Menu::SITE_ID, DomainManager::getSiteId());
-            })->get();
-            /**
-             * @var $menuItem Menu
-             */
-            foreach ($menuItems as $menuItem) {
-                $_data = $menuItem->getData();
-                /**
-                 * Формируем список
-                 */
-                if (isset($_data['data']->type) && $_data['data']->type == 'content_blog') {
-                    $data[] = $menuItem;
-                }
-            }
-            if (count($data)) {
-                if (env('CACHE_DRIVER') == 'redis') {
-                    \Cache::tags(['core'])->put($key, $data, config('cache.content.route', 5));
-                } else {
-                    \Cache::put($key, $data, config('cache.content.route', 5));
-                }
-            }
-        }
-
-        if ($data) {
-            /**
-             * @var $datum Menu
-             */
-            foreach ($data as $menuItem) {
-                \Route::get($menuItem->getRoute() . '/{id}-{alias}.html', function (Request $request, $id, $alias, $page = null) use ($menuItem) {
-                    $request->merge([
-                        'active_ids' => $menuItem->id,
-                    ]);
-                    /**
-                     * @var $contentItem Content
-                     */
-                    $contentItem = self::where([
-                        self::ALIAS => $alias,
-                        'id' => $id,
-                    ])->first();
-
-
-                    if (!$contentItem) {
-                        $menuItem->error();
-                        abort(404);
-                    }
-                    $controller = app()->make('\FastDog\Content\Controllers\Site\ContentController');
-
-                    return $controller->callAction('getItem', [
-                        ['request' => $request, 'menuItem' => $menuItem, 'contentItem' => $contentItem],
-                    ]);
-                });
-            }
-        }
-
-        \Route::post('/content/add-comment/{item_id}', '\FastDog\Content\Controllers\Site\ContentController@postAddComment');
-    }
-
-    /**
-     * События обрабатываемые модулем
-     *
-     * @return mixed
-     */
-    public function initEvents()
-    {
-        return [
-            //Обрбаотка данных при выводе в список в админке
-            'FastDog\Content\Events\ContentAdminListPrepare' => [
-                'FastDog\Content\Listeners\ContentAdminListPrepare',
-            ],
-            //Обрбаотка данных при выводе в форму редактирования
-            'FastDog\Content\Events\ContentAdminPrepare' => [
-                'App\Core\Listeners\AdminItemPrepare',// <-- Поля даты обновления и т.д.
-                'App\Core\Listeners\MetadataAdminPrepare',// <-- SEO
-                'FastDog\Content\Listeners\ContentAdminPrepare',
-                'FastDog\Content\Listeners\ContentItemAdminSetEditorForm',//<-- ставим форму редактирования
-            ],
-            //Обрбаотка данных при выводе в форму редактирования
-            'FastDog\Content\Events\Category\ContentCategoryAdminPrepare' => [
-                'App\Core\Listeners\AdminItemPrepare',// <-- Поля даты обновления и т.д.
-                'App\Core\Listeners\MetadataAdminPrepare',// <-- SEO
-                'FastDog\Content\Listeners\Category\ContentCategoryAdminPrepare',
-                'FastDog\Content\Listeners\Category\ContentCategoryAdminSetEditorForm',//<-- ставим форму редактирования
-            ],
-            //Обрбаотка данных при выводе в таблицу администрирования
-            'FastDog\Content\Events\Category\ContentAdminListPrepare' => [
-                'FastDog\Content\Listeners\Category\ContentAdminListPrepare',
-            ],
-            //Обрбаотка данных при выводе материала в публичной части
-            'FastDog\Content\Events\ContentPrepare' => [
-                'FastDog\Content\Listeners\ContentPrepare',
-            ],
-            //Обрбаотка данных перед сохранением материала в разделе администрирования
-            'FastDog\Content\Events\ContentAdminBeforeSave' => [
-                'FastDog\Content\Listeners\ContentAdminBeforeSave',
-            ],
-            //Обрбаотка данных после сохранением материала в разделе администрирования
-            'FastDog\Content\Events\ContentAdminAfterSave' => [
-                'FastDog\Content\Listeners\ContentAdminAfterSave',
-            ],
-            //Обрбаотка данных перед сохранением категории в разделе администрирования
-            'FastDog\Content\Events\Category\ContentCategoryAdminBeforeSave' => [
-                'FastDog\Content\Listeners\Category\ContentCategoryAdminBeforeSave',
-            ],
-            //Обрбаотка данных после сохранением категории в разделе администрирования
-            'FastDog\Content\Events\Category\ContentCategoryAdminAfterSave' => [
-                'FastDog\Content\Listeners\Category\ContentCategoryAdminAfterSave',
-            ],
-            //Обрбаотка данных при выводе списка категорий в публичном разделе
-            'FastDog\Content\Events\Category\ContentListPrepare' => [
-                'FastDog\Content\Listeners\Category\ContentListPrepare',
-            ],
-            //Обрбаотка данных при выводе категории в публичном разделе
-            'FastDog\Content\Events\Category\ContentCategoryPrepare' => [
-                'FastDog\Content\Listeners\Category\ContentCategoryPrepare',
-            ],
-            //Обрбаотка данных при выводе категории в публичном разделе
-            'FastDog\Content\Events\ContentListPrepare' => [
-                'FastDog\Content\Listeners\ContentListPrepare',
-            ],
-            //исправляем канонические ссылки после сохранения пункта меню
-            'App\Modules\Menu\Events\MenuItemAfterSave' => [
-                'FastDog\Content\Listeners\MenuItemAfterSave',
-            ],
-            //исправляем канонические ссылки до сохранения пункта меню
-            'App\Modules\Menu\Events\MenuItemBeforeSave' => [
-                'FastDog\Content\Listeners\MenuItemBeforeSave',
-            ],
-        ];
-    }
-
-    /**
      * Возвращает возможные состояния материалов
      *
      * @return array
@@ -421,9 +87,9 @@ class Content extends ContentModel
     public static function getStatusList(): array
     {
         return [
-            ['id' => Content::STATE_PUBLISHED, 'name' => trans('app.Опубликовано')],
-            ['id' => self::STATE_NOT_PUBLISHED, 'name' => trans('app.Не опубликовано')],
-            ['id' => self::STATE_IN_TRASH, 'name' => trans('app.В корзине')],
+            ['id' => Content::STATE_PUBLISHED, 'name' => trans('content::interface.state_list.published')],
+            ['id' => Content::STATE_NOT_PUBLISHED, 'name' => trans('content::interface.state_list.not_published')],
+            ['id' => Content::STATE_IN_TRASH, 'name' => trans('content::interface.state_list.in_trash')],
         ];
     }
 
@@ -434,7 +100,7 @@ class Content extends ContentModel
      * @param bool $skip_load_raw
      * @return array
      */
-    public function getTemplates($paths = '', $skip_load_raw = false)
+    public function getTemplates($paths = ''): array
     {
         $result = [];
 
@@ -451,32 +117,36 @@ class Content extends ContentModel
             if ($currentPath !== '') {
                 $description = [];
                 if (file_exists(dirname($currentPath) . '/.description.php') && $description == []) {
-                    $description = include_once dirname($currentPath) . '/.description.php';
+                    $description = include dirname($currentPath) . '/.description.php';
                 }
                 foreach (glob($currentPath) as $filename) {
                     if (!isset($result[$code])) {
                         $result[$code]['templates'] = [];
                     }
-
                     $tmp = explode('/', $filename);
-                    $templateName = array_last($tmp);
+
                     $count = count($tmp);
                     if ($count >= 2) {
-                        $templateType = $tmp[$count - 2];
-                        $templateName = str_replace(['.blade.php'], [''], $templateName);
-                        $name = $templateName;
-                        if (isset($description[$templateName])) {
-                            $name = $description[$templateName];
+                        $search = array_search($_code, $tmp);
+                        if ($search) {
+                            $tmp = array_slice($tmp, $search + 1, $count);
                         }
-                        $id = 'theme#' . $_code . '::modules.content.' . $templateType . '.' . $templateName;
+                        $templateName = implode('.', $tmp);
+
+                        $templateName = str_replace(['.blade.php'], [''], $templateName);
+                        $name = Arr::last(explode('.', $templateName));
+
+                        if (isset($description[$name])) {
+                            $name = $description[$name];
+                        }
+                        $id = 'theme#' . $_code . '::' . $templateName;
                         $trans_key = str_replace(['.', '::'], '/', $id);
 
                         array_push($result[$code]['templates'], [
                             'id' => $id,
                             'name' => $name,
-                            'trans_key' => $trans_key,
-                            'translate' => ($skip_load_raw === false) ? Translate::getSegmentAdmin($trans_key) : [],
-                            'raw' => ($skip_load_raw === false) ? \File::get(view($id)->getPath()) : [],
+                            'translate' => Translate::getSegmentAdmin($trans_key),
+                            'raw' => File::get(view($id)->getPath()),
                         ]);
                     }
                 }
@@ -491,9 +161,12 @@ class Content extends ContentModel
      *
      * @return null|array
      */
-    public function getMenuType()
+    public function getMenuType(): array
     {
-        return (isset($this->config->menu)) ? $this->config->menu : [];
+        return [
+            ['id' => 'content_item', 'name' => trans('content::menu.content_item'), 'sort' => 300],
+            ['id' => 'content_item', 'name' => trans('content::menu.content_blog'), 'sort' => 310],
+        ];
     }
 
     /**
@@ -502,7 +175,8 @@ class Content extends ContentModel
     public function getTemplatesPaths(): array
     {
         return [
-
+            'content_item' => "/modules/content/item/*.blade.php",
+            'content_blog' => "/modules/content/blog/*.blade.php",
         ];
     }
 
@@ -519,7 +193,7 @@ class Content extends ContentModel
 
         return [
             'id' => self::MODULE_ID,
-            'menu' => function() use ($paths, $templates_paths) {
+            'menu' => function () use ($paths, $templates_paths) {
                 $result = collect();
                 foreach ($this->getMenuType() as $id => $item) {
                     $result->push([
@@ -531,21 +205,22 @@ class Content extends ContentModel
                     ]);
                 }
                 $result = $result->sortBy('sort');
+
                 return $result;
             },
             'templates_paths' => $templates_paths,
             'module_type' => $this->getMenuType(),
-            'admin_menu' => function() {
+            'admin_menu' => function () {
                 return $this->getAdminMenuItems();
             },
-            'access' => function() {
+            'access' => function () {
                 return [
                     '000',
                 ];
             },
-            'route' => function(Request $request, $item) {
+            'route' => function (Request $request, $item) {
                 return $this->getMenuRoute($request, $item);
-            }
+            },
         ];
     }
 
@@ -554,6 +229,7 @@ class Content extends ContentModel
      *
      * @param $data
      * @return mixed
+     * @deprecated
      */
     public function setConfig($data)
     {
@@ -564,6 +240,7 @@ class Content extends ContentModel
      *  Возвращает параметры объекта
      *
      * @return mixed
+     * @deprecated
      */
     public function getConfig()
     {
@@ -582,26 +259,26 @@ class Content extends ContentModel
         $result = [
             'id' => 'content',
             'instance' => __CLASS__,
-            'name' => trans('app.Материалы'),
+            'name' => trans('content::interface.Материалы'),
             'items' => [
                 [
                     'id' => 'category',
-                    'name' => trans('app.Материалы') . ' :: ' . trans('app.Блог категории'),
+                    'name' => trans('content::menu.content_blog'),
                     'templates' => $this->getTemplates($paths . '/modules/content/blog/*.blade.php'),
                 ],
                 [
                     'id' => 'item',
-                    'name' => trans('app.Материалы') . ' :: ' . trans('app.Отдельная публикация'),
+                    'name' => trans('content::menu.content_item'),
                     'templates' => $this->getTemplates($paths . '/modules/content/item/*.blade.php'),
                 ],
                 [
                     'id' => 'tags',
-                    'name' => trans('app.Материалы') . ' :: ' . trans('app.Теги'),
+                    'name' => trans('content::menu.content_tags'),
                     'templates' => $this->getTemplates($paths . '/modules/content/tags/*.blade.php'),
                 ],
                 [
                     'id' => 'related',
-                    'name' => trans('app.Материалы') . ' :: ' . trans('app.Похожие материалы'),
+                    'name' => trans('content::menu.content_related'),
                     'templates' => $this->getTemplates($paths . '/modules/content/related/*.blade.php'),
                 ],
             ],
@@ -678,7 +355,6 @@ class Content extends ContentModel
             'route' => implode('/', $result),
         ];
     }
-
 
 
     /**
@@ -828,20 +504,11 @@ class Content extends ContentModel
     }
 
     /**
-     * Метод возвращает директорию модуля
-     *
-     * @return string
-     */
-    public function getModuleDir()
-    {
-        return dirname(__FILE__);
-    }
-
-    /**
      * Метод удаляет не нужную разметку из текста перед сохранением объектов
      *
      * @param $data
      * @return mixed
+     * @deprecated
      */
     public static function prepareTextBeforeSave($data)
     {
@@ -888,47 +555,6 @@ class Content extends ContentModel
         return [];
     }
 
-    /**
-     * Схема установки модуля
-     *
-     * @param array $allSteps схема установки системы
-     *
-     * @return mixed
-     */
-    public function getInstallStep(&$allSteps)
-    {
-        $last = array_last(array_keys($allSteps));
-
-
-        $allSteps[$last]['step'] = 'content_init';
-        $allSteps['content_init'] = [
-            'title_step' => trans('app.Модуль Материалы: подготовка, создание таблиц'),
-            'step' => 'content_install',
-            'stop' => false,
-            'install' => function ($request) {
-                sleep(1);
-            },
-        ];
-
-        $allSteps['content_install'] = [
-            'title_step' => trans('app.Модуль Материалы: таблицы созданы'),
-            'step' => '',
-            'stop' => false,
-            'install' => function ($request) {
-                \FastDog\Content\Entity\Content::createDbSchema();
-                ContentCanonical::createDbSchema();
-                ContentCanonicalCheckResult::createDbSchema();
-                ContentCategory::createDbSchema();
-                ContentComments::createDbSchema();
-                ContentConfig::createDbSchema();
-                ContentStatistic::createDbSchema();
-                ContentTag::createDbSchema();
-                sleep(1);
-            },
-        ];
-
-        return $allSteps;
-    }
 
     /**
      * Меню администратора
@@ -941,23 +567,36 @@ class Content extends ContentModel
     {
         $result = [];
 
-        array_push($result, [
-            'name' => '<i class="fa fa-table"></i> ' . trans('app.Управление'),
+        $result = [
+            'icon' => 'fa-newspaper-o',
+            'name' => trans('content::interface.Материалы'),
+            'route' => '/content',
+            'children' => [],
+        ];
+
+        array_push($result['children'], [
+            'icon' => 'fa-table',
+            'name' => trans('content::interface.Управление'),
             'route' => '/content/items',
+            'new' => '/content/item/0',
         ]);
 
-        array_push($result, [
-            'name' => '<i class="fa fa-table"></i> ' . trans('app.Категории'),
-            'route' => '/content/category/items',
+        array_push($result['children'], [
+            'icon' => 'fa-table',
+            'name' => trans('content::interface.Категории'),
+            'route' => '/content/category',
+            'new' => '/content/category/0',
         ]);
 
-        array_push($result, [
-            'name' => '<i class="fa fa-power-off"></i> ' . trans('app.Диагностика'),
+        array_push($result['children'], [
+            'icon' => 'fa-power-off',
+            'name' => trans('content::interface.Диагностика'),
             'route' => '/content/diagnostic',
         ]);
 
-        array_push($result, [
-            'name' => '<i class="fa fa-gears"></i> ' . trans('app.Настройки'),
+        array_push($result['children'], [
+            'icon' => 'fa-gears',
+            'name' => trans('content::interface.Настройки'),
             'route' => '/content/configuration',
         ]);
 
@@ -986,13 +625,4 @@ class Content extends ContentModel
         return $result;
     }
 
-    /**
-     * Возвращает массив таблиц для резервного копирования
-     *
-     * @return array
-     */
-    public function getTables()
-    {
-        // TODO: Implement getTables() method.
-    }
 }

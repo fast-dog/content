@@ -1,11 +1,10 @@
 <?php
 
-namespace FastDog\Content\Entity;
+namespace FastDog\Content\Models;
 
 use FastDog\Content\Events\ContentAdminPrepare;
 use DOMDocument;
 use DOMElement;
-use FastDog\Core\Interfaces\SearchResult;
 use FastDog\Core\Media\Interfaces\MediaInterface;
 use FastDog\Core\Media\Traits\MediaTraits;
 use FastDog\Core\Models\BaseModel;
@@ -19,10 +18,7 @@ use FastDog\Core\Table\Filters\Operator\BaseOperator;
 use FastDog\Core\Table\Interfaces\TableModelInterface;
 use FastDog\Menu\Menu;
 use FastDog\User\User;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Материалы
@@ -34,7 +30,7 @@ use Illuminate\Support\Facades\Schema;
  * построения интерфейса таблиц
  * PropertiesInterface - поддержка дополнительных, произвольных, парамтеров модели
  *
- * @package FastDog\Content\Entity
+ * @package FastDog\Content\Models
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */
@@ -664,13 +660,13 @@ class Content extends BaseModel implements /*SearchResult,*/
     {
         return [
             [
-                'name' => trans('app.Название'),
+                'name' => trans('content::interface.name'),
                 'key' => BaseModel::NAME,
                 'domain' => true,
                 'link' => 'content_item',
             ],
             [
-                'name' => trans('app.Категория'),
+                'name' => trans('content::interface.category'),
                 'key' => Content::CATEGORY_ID,
                 'width' => 150,
                 'link' => null,
@@ -678,14 +674,14 @@ class Content extends BaseModel implements /*SearchResult,*/
                 'related' => 'category:' . ContentCategory::NAME,
             ],
             [
-                'name' => trans('app.Дата'),
+                'name' => trans('content::interface.created_at'),
                 'key' => Content::PUBLISHED_AT,
                 'width' => 150,
                 'link' => null,
                 'class' => 'text-center',
             ],
             [
-                'name' => trans('app.Просмотров'),
+                'name' => trans('content::interface.view_count'),
                 'key' => Content::VIEW_COUNTER,
                 'width' => 80,
                 'link' => null,
@@ -711,7 +707,7 @@ class Content extends BaseModel implements /*SearchResult,*/
             [
                 [
                     BaseFilter::NAME => Content::NAME,
-                    BaseFilter::PLACEHOLDER => trans('app.Название'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.name'),
                     BaseFilter::TYPE => BaseFilter::TYPE_TEXT,
                     BaseFilter::DISPLAY => false,
                     BaseFilter::OPERATOR => (new BaseOperator('LIKE', 'LIKE'))->getOperator(),
@@ -722,7 +718,7 @@ class Content extends BaseModel implements /*SearchResult,*/
                     BaseFilter::TYPE => BaseFilter::TYPE_TEXT,
                     BaseFilter::NAME => Content::ALIAS,
                     BaseFilter::DISPLAY => true,
-                    BaseFilter::PLACEHOLDER => trans('app.Псевдоним'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.alias'),
                     BaseFilter::OPERATOR => (new BaseOperator())->getOperator(),
                     BaseFilter::VALIDATE => 'required|min:5',
                 ],
@@ -731,7 +727,7 @@ class Content extends BaseModel implements /*SearchResult,*/
                     BaseFilter::TYPE => BaseFilter::TYPE_DATETIME,
                     BaseFilter::NAME => Content::PUBLISHED_AT,
                     BaseFilter::DISPLAY => true,
-                    BaseFilter::PLACEHOLDER => trans('app.Дата публикации'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.published_at'),
                     BaseFilter::OPERATOR => (new BaseOperator('BETWEEN', 'BETWEEN'))->getOperator(
                         [['id' => 'BETWEEN', 'name' => 'BETWEEN']]
                     ),
@@ -743,7 +739,7 @@ class Content extends BaseModel implements /*SearchResult,*/
                     BaseFilter::TYPE => BaseFilter::TYPE_SELECT,
                     BaseFilter::NAME => Content::STATE,
                     BaseFilter::DISPLAY => true,
-                    BaseFilter::PLACEHOLDER => trans('app.Состояние'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.state'),
                     BaseFilter::DATA => Content::getStatusList(),
                     BaseFilter::OPERATOR => (new BaseOperator())->getOperator(),
                 ],
@@ -752,7 +748,7 @@ class Content extends BaseModel implements /*SearchResult,*/
                     BaseFilter::TYPE => BaseFilter::TYPE_SELECT,
                     BaseFilter::NAME => Content::CATEGORY_ID,
                     BaseFilter::DISPLAY => true,
-                    BaseFilter::PLACEHOLDER => trans('app.Категория'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.category'),
                     BaseFilter::DATA => ContentCategory::getList(),
                     BaseFilter::OPERATOR => (new BaseOperator('IN', 'IN'))->getOperator(
                         [['id' => 'IN', 'name' => 'IN'], ['id' => 'NOT IN', 'name' => 'NOT IN']]
@@ -765,7 +761,7 @@ class Content extends BaseModel implements /*SearchResult,*/
                     BaseFilter::TYPE => BaseFilter::TYPE_DATETIME,
                     BaseFilter::NAME => Content::CREATED_AT,
                     BaseFilter::DISPLAY => true,
-                    BaseFilter::PLACEHOLDER => trans('app.Дата создания'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.created_at'),
                     BaseFilter::OPERATOR => (new BaseOperator('BETWEEN', 'BETWEEN'))->getOperator(
                         [['id' => 'BETWEEN', 'name' => 'BETWEEN']]
                     ),
@@ -793,69 +789,66 @@ class Content extends BaseModel implements /*SearchResult,*/
     {
         $result = [
             [
-                BaseProperties::NAME => 'Автоматическое превью',
+                BaseProperties::NAME => trans('content::properties.auto_preview'),
                 BaseProperties::ALIAS => 'ALLOW_AUTO_RESIZE_IMAGE',
                 BaseProperties::VALUE => 'Y',
                 BaseProperties::SORT => 100,
                 BaseProperties::TYPE => BaseProperties::TYPE_SELECT,
                 BaseProperties::DATA => json_encode([
-                    'description' => 'Автоматическое изменение размера изображений в тексте,
-в качестве размеров превью будут использованы атрибуты тега <strong>img</strong> width="<strong>250</strong>" и height="<strong>100</strong>"',
+                    'description' => trans('content::properties.auto_preview_description'),
                     'values' => [
-                        ['id' => null, 'alias' => 'Y', 'name' => 'Разрешить',],
-                        ['id' => null, 'alias' => 'N', 'name' => 'Запретить',],
+                        ['id' => null, 'alias' => 'Y', 'name' => trans('content::properties.yes'),],
+                        ['id' => null, 'alias' => 'N', 'name' => trans('content::properties.no'),],
                     ],
                 ]),
             ],
             [
-                BaseProperties::NAME => 'Размер превью по горизонтали',
+                BaseProperties::NAME => trans('content::properties.default_width'),
                 BaseProperties::ALIAS => 'DEFAULT_WIDTH',
                 BaseProperties::VALUE => '250',
                 BaseProperties::SORT => 200,
                 BaseProperties::TYPE => BaseProperties::TYPE_NUMBER,
                 BaseProperties::DATA => json_encode([
-                    'description' => 'В случае если размеры не заданы в теге img,
- данные параметр определяет размер превью по горизонтали (ширина) по умолчанию',
+                    'description' => trans('content::properties.default_width_description'),
                 ]),
             ],
             [
-                BaseProperties::NAME => 'Размер превью по вертикали',
+                BaseProperties::NAME => trans('content::properties.default_height'),
                 BaseProperties::ALIAS => 'DEFAULT_HEIGHT',
                 BaseProperties::VALUE => '150',
                 BaseProperties::SORT => 300,
                 BaseProperties::TYPE => BaseProperties::TYPE_NUMBER,
                 BaseProperties::DATA => json_encode([
-                    'description' => 'В случае если размеры не заданы в теге img,
- данные параметр определяет размер превью по вертикали (высота) по умолчанию',
+                    'description' => trans('content::properties.default_height_description'),
                 ]),
             ],
             [
-                BaseProperties::NAME => 'Автоматическая галерея',
+                BaseProperties::NAME => trans('content::properties.fancybox'),
                 BaseProperties::ALIAS => 'WRAP_IMAGES_FANCYBOX',
                 BaseProperties::VALUE => 'Y',
                 BaseProperties::SORT => 400,
                 BaseProperties::TYPE => BaseProperties::TYPE_SELECT,
                 BaseProperties::DATA => json_encode([
-                    'description' => 'Автоматическая обертка изображений в HTML структуру плагина галереи (по умолчанию fancybox)',
+                    'description' => trans('content::properties.fancybox_description'),
                     'values' => [
-                        ['id' => null, 'alias' => 'Y', 'name' => 'Разрешить',],
-                        ['id' => null, 'alias' => 'N', 'name' => 'Запретить',],
+                        ['id' => null, 'alias' => 'Y', 'name' => trans('content::properties.yes'),],
+                        ['id' => null, 'alias' => 'N', 'name' => trans('content::properties.no'),],
                     ],
                 ]),
             ],
-            [
-                BaseProperties::NAME => 'Формы',
-                BaseProperties::ALIAS => 'FORMS',
-                BaseProperties::VALUE => '',
-                BaseProperties::SORT => 500,
-                BaseProperties::TYPE => BaseProperties::TYPE_SELECT,
-                BaseProperties::DATA => json_encode([
-                    'description' => 'выбор доступных форм, в тексте размещается маркер вида {{FORM_[form_name]=[template]}} где form_name - имя формы,
-                     template - шаблон находящийся в theme#SITE_ID.::modules.forms.sample.[template].blade.php',
-                    'values' => (array)[],// FormManager::getList(),
-                    'multiple' => false,
-                ]),
-            ],
+//            [
+//                BaseProperties::NAME => 'Формы',
+//                BaseProperties::ALIAS => 'FORMS',
+//                BaseProperties::VALUE => '',
+//                BaseProperties::SORT => 500,
+//                BaseProperties::TYPE => BaseProperties::TYPE_SELECT,
+//                BaseProperties::DATA => json_encode([
+//                    'description' => 'выбор доступных форм, в тексте размещается маркер вида {{FORM_[form_name]=[template]}} где form_name - имя формы,
+//                     template - шаблон находящийся в theme#SITE_ID.::modules.forms.sample.[template].blade.php',
+//                    'values' => (array) FormManager::getList(),
+//                    'multiple' => false,
+//                ]),
+//            ],
         ];
 
         return collect($result);

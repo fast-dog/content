@@ -1,18 +1,19 @@
 <?php
 
-namespace FastDog\Content\Entity;
+namespace FastDog\Content\Models;
 
 
-use App\Core\Media\Traits\MediaTraits;
-use App\Core\Properties\Interfases\PropertiesInterface;
-use App\Core\Properties\Traits\PropertiesTrait;
-use App\Core\Table\Filters\BaseFilter;
-use App\Core\Table\Filters\Operator\BaseOperator;
-use App\Core\Table\Interfaces\TableModelInterface;
-use App\Core\Traits\StateTrait;
-use App\Modules\Config\Entity\DomainManager;
 use FastDog\Content\Events\Category\ContentCategoryAdminPrepare;
 use Baum\Node;
+use FastDog\Core\Media\Traits\MediaTraits;
+use FastDog\Core\Models\DomainManager;
+use FastDog\Core\Properties\Interfases\PropertiesInterface;
+use FastDog\Core\Properties\Traits\PropertiesTrait;
+use FastDog\Core\Table\Filters\BaseFilter;
+use FastDog\Core\Table\Filters\Operator\BaseOperator;
+use FastDog\Core\Table\Interfaces\TableModelInterface;
+use FastDog\Core\Traits\StateTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Категории
  *
- * @package FastDog\Content\Entity
+ * @package FastDog\Content\Models
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */
@@ -88,6 +89,7 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
      * @const string
      */
     const NAME = 'name';
+
     /**
      * Дополнительные параметры
      * @const string
@@ -197,23 +199,23 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
      */
     public static function getStatistic($fire_event = true)
     {
-        $countPublished = self::where(function ($query) {
+        $countPublished = self::where(function (Builder $query) {
             $query->where(self::STATE, self::STATE_PUBLISHED);
         })->count();
 
-        $countNotPublished = self::where(function ($query) {
+        $countNotPublished = self::where(function (Builder $query) {
             $query->where(self::STATE, self::STATE_NOT_PUBLISHED);
         })->count();
 
-        $countInTrash = self::where(function ($query) {
+        $countInTrash = self::where(function (Builder $query) {
             $query->where(self::STATE, self::STATE_IN_TRASH);
         })->count();
 
-        $countDeleted = self::where(function ($query) {
+        $countDeleted = self::where(function (Builder $query) {
             $query->where(self::SITE_ID, DomainManager::getSiteId());
         })->whereNotNull('deleted_at')->count();
 
-        $total = self::where(function ($query) {
+        $total = self::where(function (Builder $query) {
 
         })->count();
 
@@ -295,51 +297,6 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
     }
 
     /**
-     * Создание таблицы базы данных
-     *
-     * Будут созданы таблицы и триггеры:
-     * <pre>
-     * CREATE TABLE  content_category (
-     *          id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-     *          name varchar(255) NOT NULL COMMENT 'Название',
-     *          alias varchar(255) NOT NULL COMMENT 'Псевдоним',
-     *          data json NOT NULL COMMENT 'Дополнительные параметры',
-     *          state tinyint(4) NOT NULL DEFAULT 1 COMMENT 'Состояние',
-     *          site_id char(3) NOT NULL DEFAULT '000' COMMENT 'Код сайта',
-     *          created_at timestamp NULL DEFAULT NULL,
-     *          updated_at timestamp NULL DEFAULT NULL,
-     *          deleted_at timestamp NULL DEFAULT NULL,
-     *          PRIMARY KEY (id),
-     *          INDEX IDX_content_category_site_id (site_id),
-     *          UNIQUE INDEX UK_content_category_alias (alias, site_id)
-     * )
-     * COMMENT = 'Категории материалов';
-     * </pre>
-     *
-     * @return void
-     * @deprecated
-     */
-    public static function createDbSchema()
-    {
-        if (!Schema::hasTable('content_category')) {
-            Schema::create('content_category', function (Blueprint $table) {
-                $table->increments('id');
-                $table->string(ContentCategory::NAME)->comment('Название');
-                $table->string(ContentCategory::ALIAS)->comment('Псевдоним');
-                $table->json(ContentCategory::DATA)->comment('Дополнительные параметры');
-                $table->tinyInteger(ContentCategory::STATE)->default(ContentCategory::STATE_PUBLISHED)->comment('Состояние');
-                $table->char(ContentCategory::SITE_ID, 3)->default('000')->comment('Код сайта');
-                $table->index(ContentCategory::SITE_ID, 'IDX_content_category_site_id');
-                $table->unique([ContentCategory::ALIAS, ContentCategory::SITE_ID], 'UK_content_category_alias');
-                $table->timestamps();
-                $table->softDeletes();
-
-            });
-            DB::statement("ALTER TABLE `content_category` comment 'Категории материалов'");
-        }
-    }
-
-    /**
      * Список категорий
      *
      * Возвращает категории каталога для выпадающий списков с
@@ -414,14 +371,14 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
     {
         return [
             [
-                'name' => trans('app.Название'),
+                'name' => trans('content::interface.name'),
                 'key' => self::NAME,
                 'domain' => true,
                 'link' => 'category_item',
                 'extra' => true,
             ],
             [
-                'name' => trans('app.Дата'),
+                'name' => trans('content::interface.created_at'),
                 'key' => 'created_at',
                 'width' => 150,
                 'link' => null,
@@ -447,7 +404,7 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
             [
                 [
                     BaseFilter::NAME => ContentCategory::NAME,
-                    BaseFilter::PLACEHOLDER => trans('app.Название'),
+                    BaseFilter::PLACEHOLDER => trans('content::interface.name'),
                     BaseFilter::TYPE => BaseFilter::TYPE_TEXT,
                     BaseFilter::DISPLAY => false,
                     BaseFilter::OPERATOR => (new BaseOperator('LIKE', 'LIKE'))->getOperator(),
@@ -466,15 +423,5 @@ class ContentCategory extends Node implements TableModelInterface, PropertiesInt
     public function getEventAdminPrepareName(): string
     {
         return ContentCategoryAdminPrepare::class;
-    }
-
-    /**
-     * Возвращает ключ доступа к ACL
-     * @param string $type
-     * @return string
-     */
-    public function getAccessKey($type = 'guest'): string
-    {
-        return strtolower(\FastDog\Content\Content::class) . '::' . DomainManager::getSiteId() . '::' . $type;
     }
 }

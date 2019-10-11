@@ -1,16 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 15.01.2017
- * Time: 19:02
- */
-
-namespace FastDog\Content\Entity;
+namespace FastDog\Content\Models;
 
 
-use App\Core\BaseModel;
-use App\Core\Desktop;
+
+use FastDog\Core\Models\BaseModel;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -18,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Параметры модуля
  *
- * @package FastDog\Content\Entity
+ * @package FastDog\Content\Models
  * @version 0.2.0
  * @author Андрей Мартынов <d.g.dev482@gmail.com>
  */
@@ -41,19 +34,21 @@ class ContentConfig extends BaseModel
      * @const string
      */
     const CONFIG_DESKTOP = 'desktop';
+
     /**
      * Тип: публичный раздел
      * @const string
      */
     const CONFIG_PUBLIC = 'public';
+
     /**
      * Значение
      * @const string
      */
     const VALUE = 'value';
+
     /**
      * Название таблицы
-     *
      * @var string $table
      */
     public $table = 'content_config';
@@ -61,7 +56,6 @@ class ContentConfig extends BaseModel
 
     /**
      * Все параметры
-     *
      * @return array
      */
     public static function getAllConfig()
@@ -94,7 +88,6 @@ class ContentConfig extends BaseModel
 
     /**
      * Детальная информация о объекте
-     *
      * @return array
      */
     public function getData(): array
@@ -132,45 +125,5 @@ class ContentConfig extends BaseModel
         }
 
         return false;
-    }
-
-    /**
-     * Создание таблицы базы данных
-     *
-     * Будут созданы таблицы и триггеры:
-     * <pre>
-     * CREATE TABLE content_config (
-     *          id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-     *          name varchar(255) NOT NULL COMMENT 'Название',
-     *          alias varchar(255) NOT NULL COMMENT 'Псевдоним',
-     *          value json NOT NULL COMMENT 'Значение',
-     *          priority tinyint(4) NOT NULL,
-     *          created_at timestamp NULL DEFAULT NULL,
-     *          updated_at timestamp NULL DEFAULT NULL,
-     *          deleted_at timestamp NULL DEFAULT NULL,
-     *          PRIMARY KEY (id),
-     *          UNIQUE INDEX UK_content_config_alias (alias)
-     * )
-     * COMMENT = 'Параметры модуля Материалы';
-     * </pre>
-     *
-     * @return void
-     */
-    public static function createDbSchema()
-    {
-        if (!Schema::hasTable('content_config')) {
-            Schema::create('content_config', function (Blueprint $table) {
-                $table->increments('id');
-                $table->string(self::NAME)->comment('Название');
-                $table->string(self::ALIAS)->comment('Псевдоним');
-                $table->json(self::VALUE)->comment('Значение');
-                $table->tinyInteger('priority');
-                $table->timestamps();
-                $table->softDeletes();
-                $table->unique(self::ALIAS, 'UK_content_config_alias');
-
-            });
-            DB::statement("ALTER TABLE `content_config` comment 'Параметры модуля Материалы'");
-        }
     }
 }

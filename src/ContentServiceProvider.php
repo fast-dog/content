@@ -4,6 +4,7 @@ namespace FastDog\Content;
 
 
 use FastDog\Core\Models\ModuleManager;
+use FastDog\Menu\ContentEventServiceProvider;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
 /**
@@ -51,7 +52,7 @@ class ContentServiceProvider extends LaravelServiceProvider
      */
     public function register(): void
     {
-//        $this->app->register(MenuEventServiceProvider::class);
+        $this->app->register(ContentEventServiceProvider::class);
 //        $this->app->register(AuthServiceProvider::class);
     }
 
@@ -71,8 +72,8 @@ class ContentServiceProvider extends LaravelServiceProvider
      */
     private function handleConfigs(): void
     {
-        $configPath = __DIR__ . '/../config/menu.php';
-        $this->publishes([$configPath => config_path('menu.php')]);
+        $configPath = __DIR__ . '/../config/content.php';
+        $this->publishes([$configPath => config_path('content.php')]);
 
         $this->mergeConfigFrom($configPath, self::NAME);
     }
