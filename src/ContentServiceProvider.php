@@ -4,7 +4,6 @@ namespace FastDog\Content;
 
 
 use FastDog\Core\Models\ModuleManager;
-use FastDog\Menu\ContentEventServiceProvider;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
 /**

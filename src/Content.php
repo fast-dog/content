@@ -4,13 +4,7 @@
 use DOMDocument;
 use FastDog\Config\Models\Translate;
 use FastDog\Content\Models\Content as ContentModel;
-use FastDog\Content\Models\ContentCanonical;
-use FastDog\Content\Models\ContentCanonicalCheckResult;
-use FastDog\Content\Models\ContentCategory;
-use FastDog\Content\Models\ContentComments;
-use FastDog\Content\Models\ContentConfig;
-use FastDog\Content\Models\ContentStatistic;
-use FastDog\Content\Models\ContentTag;
+use FastDog\Content\Models\ContentCategory; ;
 use FastDog\Content\Http\Controllers\Site\ContentController;
 use FastDog\Core\Models\Components;
 use FastDog\Core\Models\DomainManager;
