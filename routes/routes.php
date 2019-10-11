@@ -196,12 +196,11 @@ if ($data === null) {
             $data[] = $menuItem;
         }
     }
-    if (count($data)) {
-        if (env('CACHE_DRIVER') == 'redis') {
-            \Cache::tags(['core'])->put($key, $data, config('cache.content.route', 5));
-        } else {
-            \Cache::put($key, $data, config('cache.content.route', 5));
-        }
+
+    if (env('CACHE_DRIVER') == 'redis') {
+        \Cache::tags(['core'])->put($key, $data, config('cache.content.route', 5));
+    } else {
+        \Cache::put($key, $data, config('cache.content.route', 5));
     }
 }
 
