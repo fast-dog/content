@@ -207,28 +207,6 @@ class ContentFormController extends Controller implements FormControllerInterfac
     }
 
     /**
-     * Удаление значений дополнительных параметров
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function postDeleteSelectValue(Request $request): JsonResponse
-    {
-        return $this->deletePropertySelectValue($request);
-    }
-
-    /**
-     * Добавление варианта значения дополнительного параметра
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function postAddSelectValue(Request $request): JsonResponse
-    {
-        return $this->addPropertySelectValue($request);
-    }
-
-
-
-    /**
      * Обновление параметров материалов
      *
      * @param Request $request

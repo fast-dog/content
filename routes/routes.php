@@ -24,7 +24,7 @@ Route::group([
         /**
          * Форма
          */
-        $ctrl = '\FastDog\Content\Controllers\Admin\ContentFormController';
+        $ctrl = '\FastDog\Content\Http\Controllers\Admin\ContentFormController';
 
         // Отдельный объект
         \Route::get('/public/content/{id}', array_replace_recursive($baseParameters, [
@@ -56,21 +56,8 @@ Route::group([
             'uses' => $ctrl . '@postReplicate',
         ]));
 
-        // Удаление значения дополнительного параметра
-        \Route::post('/content/delete-select-value', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postDeleteSelectValue',
-        ]));
 
-        // Добавление значения дополнительного параметра
-        \Route::post('/content/add-select-value', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postAddSelectValue',
-        ]));
-
-
-
-        /**
-         * API
-         */
+        // API
         $ctrl = '\FastDog\Content\Controllers\Admin\ApiController';
 
         \Route::get('/public/content/admin-info', $ctrl . '@getAdminInfo');
