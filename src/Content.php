@@ -4,14 +4,20 @@
 use DOMDocument;
 use FastDog\Config\Models\Translate;
 use FastDog\Content\Models\Content as ContentModel;
-use FastDog\Content\Models\ContentCategory; ;
+use FastDog\Content\Models\ContentCategory;
+
+;
+
 use FastDog\Content\Http\Controllers\Site\ContentController;
+use FastDog\Core\Models\Cache;
 use FastDog\Core\Models\Components;
 use FastDog\Core\Models\DomainManager;
+use FastDog\Media\Models\Gallery;
 use FastDog\Menu\Menu;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -362,7 +368,10 @@ class Content extends ContentModel
     {
         $result = '';
         $data = $module->getData();
-        $isRedis = config('cache.default') == 'redis';
+
+        /** @var Cache $cache */
+        $cache = app()->make(Cache::class);
+
         if (isset($data['data']->type->id)) {
             switch ($data['data']->type->id) {
                 case 'content::item':
@@ -380,90 +389,82 @@ class Content extends ContentModel
                     }
                     break;
                 case 'content::tags':
-                    $key = __METHOD__ . '::' . DomainManager::getSiteId() . '::tags';
 
-                    $items = ($isRedis) ? \Cache::tags(['content'])->get($key, null) : \Cache::get($key, null);
-                    if (null === $items) {
-                        $items = \DB::table(\DB::raw('content_tag ct'))
+                    /** @var Collection $items */
+                    $items = $cache->get(__METHOD__ . '::' . DomainManager::getSiteId() . '::tags', function () {
+                        return \DB::table(\DB::raw('content_tag ct'))
                             ->select(\DB::raw('ct.text, COUNT(*) as count'))
                             ->groupBy('ct.text')
                             ->orderBy('count', 'desc')
                             ->limit(10)
                             ->get();
-                        if ($isRedis) {
-                            \Cache::tags(['content'])->put($key, $items, config('cache.ttl_core', 5));
-                        } else {
-                            \Cache::put($key, $items, config('cache.ttl_core', 5));
-                        }
-                    }
+                    }, ['content']);
+
+
                     if (isset($data['data']->template->id) && view()->exists($data['data']->template->id)) {
                         return view($data['data']->template->id, [
                             'items' => $items,
                         ])->render();
                     }
                     break;
-                case 'content::related':
-                    /**
-                     * Похожие материалы
-                     */
-                    $items = [];
-                    $key = __METHOD__ . '::' . DomainManager::getSiteId() . '::related';
-
-                    $items = ($isRedis) ? \Cache::tags(['content'])->get($key, null) : \Cache::get($key, null);
-                    if (null === $items) {
-                        $items = [];
-                        $_items = Content::where(function (Builder $query) {
-                            $filter = \Request::input('filter', []);
-                            if ($filter) {
-                                foreach ($filter as $key => $value) {
-                                    switch ($key) {
-                                        case 'category_id':
-                                            $query->where(Content::CATEGORY_ID, $value);
-                                            break;
-                                        case 'exclude':
-                                            $query->whereNotIn('id', (array)$value);
-                                            break;
+                case 'content::related':// Похожие материалы
+                    /** @var array $items */
+                    $items = $cache->get(__METHOD__ . '::' . DomainManager::getSiteId() . '::related',
+                        function () use ($module) {
+                            $result = [];
+                            Content::where(function (Builder $query) {
+                                $filter = \Request::input('filter', []);
+                                if ($filter) {
+                                    foreach ($filter as $key => $value) {
+                                        switch ($key) {
+                                            case 'category_id':
+                                                $query->where(Content::CATEGORY_ID, $value);
+                                                break;
+                                            case 'exclude':
+                                                $query->whereNotIn('id', (array)$value);
+                                                break;
+                                        }
                                     }
                                 }
-                            }
-                            $query->where(Content::STATE, Content::STATE_PUBLISHED);
-                            $query->where(Content::SITE_ID, DomainManager::getSiteId());
-                        })->limit($module->getParameterByFilterData(['name' => 'LIMIT'], 5))
-                            ->orderBy('published_at', 'desc')->get();
+                                $query->where(Content::STATE, Content::STATE_PUBLISHED);
+                                $query->where(Content::SITE_ID, DomainManager::getSiteId());
+                            })
+                                ->limit($module->getParameterByFilterData(['name' => 'LIMIT'], 5))
+                                ->orderBy('published_at', 'desc')
+                                ->get()
+                                ->each(function (Content $contentItem) use ($module, &$result) {
+                                    $contentItemData = $contentItem->getData();
+                                    //todo: переработать тут позже :=)
+                                    $contentItemData[Content::DATA]->media = $contentItem->getMedia();
 
-                        /**
-                         * @var $contentItem Content
-                         */
-                        foreach ($_items as $contentItem) {
-                            $contentItemData = $contentItem->getData();
-                            //todo: переработать тут позже :=)
-                            $contentItemData[Content::DATA]->media = $contentItem->getMedia();
+                                    if (isset($contentItemData[Content::DATA]->media)) {
+                                        $contentItem->preview = array_filter($contentItemData[Content::DATA]->media,
+                                            function ($image) use ($contentItem, $module) {
+                                                if ($image->type == 'file' && $image->src !== '') {
+                                                    $defaultWidth = $module->getParameterByFilterData(['name' => 'DEFAULT_WIDTH'], 50);
+                                                    $defaultHeight = $module->getParameterByFilterData(['name' => 'DEFAULT_HEIGHT'], 50);
+                                                    /**
+                                                     * Изменение размеров
+                                                     */
+                                                    if ($module->getParameterByFilterData(['name' => 'ALLOW_AUTO_RESIZE_IMAGE'], 'N') === 'Y') {
+                                                        $src = str_replace(url('/'), '', $image->src);
+                                                        $result = Gallery::getPhotoThumb($src, $defaultWidth, $defaultHeight);
+                                                        if ($result['exist']) {
+                                                            $image->_src = $image->src;
+                                                            $image->src = url($result['file']);
+                                                        }
+                                                    }
 
-                            if (isset($contentItemData[Content::DATA]->media)) {
-                                $contentItem->preview = array_filter($contentItemData[Content::DATA]->media,
-                                    function ($image) use ($contentItem, $module) {
-                                        if ($image->type == 'file' && $image->src !== '') {
-                                            $defaultWidth = $module->getParameterByFilterData(['name' => 'DEFAULT_WIDTH'], 50);
-                                            $defaultHeight = $module->getParameterByFilterData(['name' => 'DEFAULT_HEIGHT'], 50);
-                                            /**
-                                             * Изменение размеров
-                                             */
-                                            if ($module->getParameterByFilterData(['name' => 'ALLOW_AUTO_RESIZE_IMAGE'], 'N') === 'Y') {
-                                                $src = str_replace(url('/'), '', $image->src);
-                                                $result = Gallery::getPhotoThumb($src, $defaultWidth, $defaultHeight);
-                                                if ($result['exist']) {
-                                                    $image->_src = $image->src;
-                                                    $image->src = url($result['file']);
+                                                    return $image;
                                                 }
-                                            }
+                                            });
+                                    }
 
-                                            return $image;
-                                        }
-                                    });
-                            }
-                            array_push($items, $contentItem);
-                        }
-                    }
+                                    array_push($result, $contentItem);
+                                });
+
+                            return $result;
+                        }, ['content']);
 
 
                     if (isset($data['data']->template->id) && view()->exists($data['data']->template->id)) {
@@ -559,8 +560,6 @@ class Content extends ContentModel
      */
     public function getAdminMenuItems()
     {
-        $result = [];
-
         $result = [
             'icon' => 'fa-newspaper-o',
             'name' => trans('content::interface.Материалы'),
