@@ -1,22 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 12.04.2018
- * Time: 11:35
- */
 
 namespace FastDog\Content\Http\Controllers\Admin;
 
 
 use FastDog\Content\Content;
-use FastDog\Content\Entity\ContentCanonical;
-use FastDog\Content\Entity\ContentCanonicalCheckResult;
-use FastDog\Content\Entity\ContentCategory;
-use FastDog\Content\Entity\ContentConfig;
-use FastDog\Content\Entity\ContentStatistic;
 use Carbon\Carbon;
 use Curl\Curl;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Models\ModuleManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +25,7 @@ class ApiController extends Controller
     {
         parent::__construct();
 
-        $this->page_title = trans('app.Материалы');
+        $this->page_title = trans('content::interface.Материалы');
     }
 
     /**

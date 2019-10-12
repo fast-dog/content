@@ -66,10 +66,7 @@ Route::group([
             'uses' => $ctrl . '@postAddSelectValue',
         ]));
 
-        // Добавление\Сохранение дополнительного параметра
-        \Route::post('/content/save-property', array_replace_recursive($baseParameters, [
-            'uses' => $ctrl . '@postSaveProperty',
-        ]));
+
 
         /**
          * API

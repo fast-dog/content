@@ -1,25 +1,19 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 04.04.2018
- * Time: 16:08
- */
 
 namespace FastDog\Content\Http\Controllers\Admin;
 
-use App\Core\BaseModel;
-use App\Core\Form\Interfaces\FormControllerInterface;
-use App\Core\Form\Traits\FormControllerTrait;
-use App\Http\Controllers\Controller;
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCanonical;
+
 use FastDog\Content\Events\ContentAdminAfterSave;
 use FastDog\Content\Events\ContentAdminBeforeSave;
-use FastDog\Content\Request\AddContent;
-use FastDog\Content\Request\ContentReplicate;
 use Carbon\Carbon;
+use FastDog\Content\Http\Request\AddContent;
+use FastDog\Content\Http\Request\ContentReplicate;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Core\Form\Interfaces\FormControllerInterface;
+use FastDog\Core\Form\Traits\FormControllerTrait;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Models\DomainManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -40,7 +34,7 @@ class ContentFormController extends Controller implements FormControllerInterfac
     public function __construct(Content $model)
     {
         $this->model = $model;
-        $this->page_title = trans('app.Материалы');
+        $this->page_title = trans('content::interface.Материалы');
         parent::__construct();
     }
 
@@ -50,11 +44,11 @@ class ContentFormController extends Controller implements FormControllerInterfac
      */
     public function getEditItem(Request $request): JsonResponse
     {
-        $this->breadcrumbs->push(['url' => '/content/items', 'name' => trans('app.Управление')]);
+        $this->breadcrumbs->push(['url' => '/content/items', 'name' => trans('content::interface.Управление')]);
 
         $result = $this->getItemData($request);
         if ($this->item) {
-            $this->breadcrumbs->push(['url' => false, 'name' => $this->item->{BaseModel::NAME}]);
+            $this->breadcrumbs->push(['url' => false, 'name' => $this->item->{Content::NAME}]);
         }
 
         return $this->json($result, __METHOD__);
@@ -76,7 +70,7 @@ class ContentFormController extends Controller implements FormControllerInterfac
             $data[Content::SITE_ID] = DomainManager::getSiteId();
         }
         if ($data[Content::ALIAS] == '#') {
-            $data[Content::ALIAS] = \Slug::make($data[Content::TITLE]);
+            $data[Content::ALIAS] = str_slug($data[Content::TITLE]);
         }
         $_data = [
             Content::TITLE => $data[Content::TITLE],
@@ -92,10 +86,8 @@ class ContentFormController extends Controller implements FormControllerInterfac
         if ($created_at) {
             $_data['created_at'] = Carbon::createFromFormat('Y-m-d', $created_at)->format(Carbon::DEFAULT_TO_STRING_FORMAT);
         }
-        /*
-         * Определение основных параметров, SEO, маршрута роутера и т.д.
-         */
-        \Event::fire(new ContentAdminBeforeSave($_data));
+        // Определение основных параметров, SEO, маршрута роутера и т.д.
+        event(new ContentAdminBeforeSave($_data));
 
         if ($request->input('id')) {
             $item = Content::find($request->input('id'));
@@ -106,16 +98,12 @@ class ContentFormController extends Controller implements FormControllerInterfac
             }
         } else {
             $item = Content::create($_data);
-            /**
-             * Передача нового объекта на клиент для корректного обновления формы
-             */
+            // Передача нового объекта на клиент для корректного обновления формы
             array_push($result['items'], $item);
         }
 
-        /*
-         * Сохранение дополнительных параметров, тегов, медиа файлов и т.д.
-         */
-        \Event::fire(new ContentAdminAfterSave($data, $item));
+        // Сохранение дополнительных параметров, тегов, медиа файлов и т.д.
+        event(new ContentAdminAfterSave($data, $item));
 
         return $this->json($result, __METHOD__);
     }
@@ -152,9 +140,7 @@ class ContentFormController extends Controller implements FormControllerInterfac
                 $result['success'] = true;
             } else {
                 $result['success'] = false;
-                $result['error'] = trans('app.Запись с указанным <b>псевдонимом</b> существует в базе данных.' .
-                    ' Попробуйте <b>изменить</b> псевдоним и повторить копирование. Если это не помогает, проверьте корзину,' .
-                    ' возможно там находится удаленная ранее копия материала');
+                $result['error'] = trans('content::interface.errors.replicate_exist');
 
                 return $this->json($result, __METHOD__);
             }
@@ -165,11 +151,9 @@ class ContentFormController extends Controller implements FormControllerInterfac
             ]);
             // $result = $this->getItem($request);
         }
-        $result['breadcrumbs'] = [
-            ['url' => '/', 'name' => trans('app.Главная')],
-            ['url' => '/content/items', 'name' => trans('app.Управление')],
-        ];
-        $result['page_title'] = trans('app.Материалы');
+
+        $this->breadcrumbs->push(['url' => '/content/items', 'name' => trans('content::interface.Управление')]);
+        $result['page_title'] = trans('content::interface.Материалы');
 
         return $this->json($result, __METHOD__);
     }
@@ -242,27 +226,25 @@ class ContentFormController extends Controller implements FormControllerInterfac
         return $this->addPropertySelectValue($request);
     }
 
-    /**
-     * Добавление\Сохранение дополнительного параметра
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function postSaveProperty(Request $request): JsonResponse
-    {
-        return $this->saveProperty($request);
-    }
+
 
     /**
      * Обновление параметров материалов
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
     public function postContentUpdate(Request $request)
     {
         $result = ['success' => true, 'items' => []];
-        $this->updatedModel($request->all(), Content::class);
 
+//        try {
+        $this->updatedModel($request->all(), Content::class);
+//        } catch (\Exception $exception) {
+//            $result['success'] = false;
+//
+//        }
         return $this->json($result, __METHOD__);
     }
 }
