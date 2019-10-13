@@ -159,41 +159,25 @@ Route::group([
     }
 );
 
-$key = 'content-' . DomainManager::getSiteId();
-
-$data = (env('CACHE_DRIVER') == 'redis') ? \Cache::tags(['core'])->get($key, null) : \Cache::get($key, null);
-
-if ($data === null) {
-    $menuItems = Menu::where(function (Builder $query) {
+/** @var array $publicRoute */
+$publicRoute = app()->make(\FastDog\Core\Models\Cache::class)->get('content-' . DomainManager::getSiteId(), function () {
+    $result = [];
+    Menu::where(function (Builder $query) {
+        $query->whereRaw(\DB::raw('data->"$.type" = \'content_blog\''));
         $query->where(Menu::STATE, Menu::STATE_PUBLISHED);
         $query->where(Menu::SITE_ID, DomainManager::getSiteId());
-    })->get();
-    /**
-     * @var $menuItem Menu
-     */
-    foreach ($menuItems as $menuItem) {
-        $_data = $menuItem->getData();
-        /**
-         * Формируем список
-         */
-        if (isset($_data['data']->type) && $_data['data']->type == 'content_blog') {
-            $data[] = $menuItem;
-        }
-    }
+    })
+        ->get()
+        ->each(function (Menu $item) use (&$result) {
+            array_push($result, $item);
+        });
+}, ['content']);
 
-    if (env('CACHE_DRIVER') == 'redis') {
-        \Cache::tags(['core'])->put($key, $data, config('cache.content.route', 5));
-    } else {
-        \Cache::put($key, $data, config('cache.content.route', 5));
-    }
-}
 
-if ($data) {
-    /**
-     * @var $datum Menu
-     */
+if ($publicRoute) {
+    /** @var Menu $menuItem */
     foreach ($data as $menuItem) {
-        \Route::get($menuItem->getRoute() . '/{id}-{alias}.html', function (Request $request, $id, $alias, $page = null) use ($menuItem) {
+        \Route::get($menuItem->getRoute() . '/', function (Request $request, $id, $alias, $page = null) use ($menuItem) {
             $request->merge([
                 'active_ids' => $menuItem->id,
             ]);
