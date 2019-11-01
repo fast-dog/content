@@ -3,11 +3,19 @@
 namespace FastDog\Content\Http\Controllers\Admin;
 
 
+use FastDog\Admin\Models\Desktop;
 use FastDog\Content\Content;
 use Carbon\Carbon;
 use Curl\Curl;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Content\Models\ContentCanonicalCheckResult;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Content\Models\ContentConfig;
+use FastDog\Content\Models\ContentStatistic;
 use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Models\DomainManager;
 use FastDog\Core\Models\ModuleManager;
+use FastDog\User\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,7 +48,7 @@ class ApiController extends Controller
 
         $this->breadcrumbs->push(['url' => false, 'name' => trans('app.Настройки')]);
 
-        $moduleManager = \App::make(ModuleManager::class);
+        $moduleManager = app()->make(ModuleManager::class);
         /**
          * @var $moduleManager ModuleManager
          */
@@ -65,11 +73,6 @@ class ApiController extends Controller
          * Статаистика просмотра материалов
          */
         array_push($result['items'], ContentStatistic::getStatistic(false));
-
-        /**
-         * Список доступа ACL
-         */
-        array_push($result['items'], Config::getAcl(DomainManager::getSiteId(), strtolower(Content::class)));
 
         /**
          * Дополнительные стили ckEditor
@@ -164,38 +167,6 @@ class ApiController extends Controller
         return $this->json($result, __METHOD__);
     }
 
-    /**
-     * Изменение доступа к модулю
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function postAccess(Request $request): JsonResponse
-    {
-        $result = ['success' => false];
-
-        $role = Role::where([
-            Role::NAME => $request->input('role'),
-        ])->first();
-        if ($role) {
-            $permission = Permission::where(function (Builder $query) use ($request, $role) {
-                $query->where(Permission::NAME, $request->input('permission') . '::' . $role->slug);
-            })->first();
-
-            if ($permission) {
-                if (isset($permission->slug[$request->input('accessName')])) {
-                    $permission_slug = $permission->slug;
-                    $permission_slug[$request->input('accessName')] = ($request->input('accessValue') == 'Y') ? true : false;
-                    Permission::where('id', $permission->id)->update([
-                        'slug' => \GuzzleHttp\json_encode($permission_slug),
-                    ]);
-                }
-            }
-            $result['acl'] = Config::getAcl(DomainManager::getSiteId(), strtolower(Content::class));
-        }
-
-        return $this->json($result, __METHOD__);
-    }
 
     /**
      * Список канонических ссылок для определенного материала
@@ -518,8 +489,8 @@ class ApiController extends Controller
         ])->first();
         // $ckTemplate->value = str_replace(['<'], ['\x3c'], $ckTemplate->value);
 
-        $contents = \View::make('public.000.javascript.ck-templates', ['data' => $ckTemplate->value]);
-        $response = \Response::make($contents, 200);
+        $contents = view()->make('public.000.javascript.ck-templates', ['data' => $ckTemplate->value]);
+        $response = response()->make($contents, 200);
         $response->header('Content-Type', 'application/javascript');
 
         return $response;

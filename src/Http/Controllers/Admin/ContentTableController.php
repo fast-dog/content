@@ -1,12 +1,13 @@
-<?php namespace FastDog\Content\Http\Controllers\Admin;
+<?php
+
+namespace FastDog\Content\Http\Controllers\Admin;
 
 
-use App\Core\BaseModel;
-use App\Core\Table\Interfaces\TableControllerInterface;
-use App\Core\Table\Traits\TableTrait;
-use App\Http\Controllers\Controller;
-use FastDog\Content\Entity\Content;
-use App\Modules\Users\User;
+use FastDog\Content\Models\Content;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Table\Interfaces\TableControllerInterface;
+use FastDog\Core\Table\Traits\TableTrait;
+use FastDog\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class ContentTableController extends Controller implements TableControllerInterf
     /**
      * Модель по которой будет осуществляться выборка данных
      *
-     * @var \FastDog\Content\Entity\Content|null $model
+     * @var \FastDog\Content\Models\Content|null $model
      */
     protected $model = null;
 
@@ -43,7 +44,7 @@ class ContentTableController extends Controller implements TableControllerInterf
     /**
      * Модель, контекст выборок
      *
-     * @return BaseModel
+     * @return Model
      */
     public function getModel(): Model
     {
@@ -58,9 +59,8 @@ class ContentTableController extends Controller implements TableControllerInterf
     {
         parent::__construct();
         $this->model = $model;
-        $this->accessKey = $this->model->getAccessKey();
         $this->initTable();
-        $this->page_title = trans('app.Материалы');
+        $this->page_title = trans('content::interface.Материалы');
     }
 
     /**
@@ -72,7 +72,7 @@ class ContentTableController extends Controller implements TableControllerInterf
     public function list(Request $request): JsonResponse
     {
         $result = self::paginate($request);
-        $this->breadcrumbs->push(['url' => false, 'name' => trans('app.Управление')]);
+        $this->breadcrumbs->push(['url' => false, 'name' => trans('content::interface.Управление')]);
 
         return $this->json($result, __METHOD__);
     }

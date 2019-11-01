@@ -1,32 +1,26 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 06.01.2017
- * Time: 23:10
- */
 
 namespace FastDog\Content\Http\Controllers\Site;
 
 
-use App\Core\Interfaces\PrepareContent;
-use App\Http\Controllers\Controller;
-use App\Modules\Config\Entity\DomainManager;
 use FastDog\Content\Content;
-use FastDog\Content\Entity\ContentCategory;
-use FastDog\Content\Entity\ContentComments;
-use FastDog\Content\Entity\ContentConfig;
 use FastDog\Content\Events\Category\ContentCategoryPrepare;
 use FastDog\Content\Events\ContentListPrepare;
 use FastDog\Content\Events\ContentPrepare;
-use FastDog\Content\Request\AddContentComment;
-use App\Modules\Media\Entity\Gallery;
-use App\Modules\Menu\Entity\Menu;
-use App\Modules\Users\Entity\User;
 use Carbon\Carbon;
+use FastDog\Content\Http\Request\AddContentComment;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Content\Models\ContentComments;
+use FastDog\Content\Models\ContentConfig;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Interfaces\PrepareContent;
+use FastDog\Core\Models\DomainManager;
+use FastDog\Media\Models\Gallery;
+use FastDog\Menu\Models\Menu;
+use FastDog\User\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Mews\Purifier\Facades\Purifier;
+use Illuminate\Support\Collection;
 
 /**
  * Публичная часть
@@ -80,7 +74,7 @@ class ContentController extends Controller implements PrepareContent
 
                 $_data = $contentItem->getData();
 
-                \Event::fire(new ContentPrepare($_data, $contentItem));
+                event(new ContentPrepare($_data, $contentItem));
 
                 /**
                  * @var $config ContentConfig
@@ -98,7 +92,7 @@ class ContentController extends Controller implements PrepareContent
                 /**
                  * @var $categoryItem ContentCategory
                  */
-                $categoryItem = ContentCategory::where(function ($query) {
+                $categoryItem = ContentCategory::where(function (Builder $query) {
                     $query->where(ContentCategory::STATE, ContentCategory::STATE_PUBLISHED);
                 })->find($data['data']->category_id);
                 if (!$categoryItem) {
@@ -107,7 +101,7 @@ class ContentController extends Controller implements PrepareContent
                 }
                 $_data = $categoryItem->getData();
 
-                \Event::fire(new ContentCategoryPrepare($_data, $categoryItem));
+                event(new ContentCategoryPrepare($_data, $categoryItem));
 
                 $categoryItem->introtext = $_data['introtext'];
                 $viewData['category'] = $categoryItem;
@@ -126,8 +120,10 @@ class ContentController extends Controller implements PrepareContent
                     ],
                 ]);
                 $scope = 'defaultSite';
+
+                /** @var Collection $contentItems */
                 $contentItems = Content::where(function ($query) use ($request, &$scope) {
-                    $this->_getMenuFilter($query, $request, $scope, Content::class);
+                    // $this->_getMenuFilter($query, $request, $scope, Content::class);
                 })->$scope()
                     ->orderBy($request->input('order_by', 'published_at'), $request->input('direction', 'desc'))
                     ->paginate($request->input('limit', self::PAGE_SIZE));
@@ -178,7 +174,8 @@ class ContentController extends Controller implements PrepareContent
                 $viewData['pages'] = ceil($viewData['total'] / $request->input('limit', self::PAGE_SIZE));
                 $viewData['page'] = $request->input('page', 1);
                 $viewData['_items'] = $contentItems;
-                \Event::fire(new ContentListPrepare($viewData));
+
+                event(new ContentListPrepare($viewData));
 
                 break;
             default:
@@ -224,14 +221,14 @@ class ContentController extends Controller implements PrepareContent
         $config = $contentItem->getPublicConfig();
         $viewData['config'] = $config;
 
-        \Request::merge([
+        request()->merge([
             'filter' => [
                 'category_id' => $_data[Content::CATEGORY_ID],
                 'exclude' => $_data['id'],
             ],
         ]);
 
-        \Event::fire(new ContentPrepare($_data, $contentItem));
+        event(new ContentPrepare($_data, $contentItem));
 
         $viewData['item'] = $_data;
         $viewData['media'] = $contentItem->getMedia();
@@ -307,7 +304,7 @@ class ContentController extends Controller implements PrepareContent
                     'email' => $request->input('email'),
                     'user_id' => ($user) ? $user->id : 0,
                 ]),
-                ContentComments::TEXT => Purifier::clean($request->input(ContentComments::TEXT)),
+                ContentComments::TEXT => $request->input(ContentComments::TEXT)// Purifier::clean($request->input(ContentComments::TEXT)),
             ]);
             $item->makeLastChildOf($root);
 

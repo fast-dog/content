@@ -1,17 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 18.01.2017
- * Time: 14:33
- */
 
 namespace FastDog\Content\Models\Desktop;
 
-
-use App\Core\Interfaces\DesktopWidget;
 use FastDog\Content\Models\Content;
 use FastDog\Content\Events\ContentAdminListPrepare;
+use FastDog\Core\Interfaces\DesktopWidget;
 
 /**
  * Блок материалов
@@ -37,7 +30,7 @@ class ViewPopularList implements DesktopWidget
      *
      * @return mixed
      */
-    public function getData()
+    public function getData(): array
     {
         $result = [
             'cols' => [
@@ -68,7 +61,7 @@ class ViewPopularList implements DesktopWidget
             ]);
         }
 
-        \Event::fire(new ContentAdminListPrepare($result));
+        event(new ContentAdminListPrepare($result));
 
         return $result;
     }
@@ -79,7 +72,7 @@ class ViewPopularList implements DesktopWidget
      * @param array $data
      * @return mixed
      */
-    public function setData(array $data)
+    public function setData(array $data): void
     {
         $this->config = $data;
     }

@@ -3,8 +3,9 @@
 namespace FastDog\Content\Events;
 
 
-use App\Core\Interfaces\AdminPrepareEventInterface;
-use FastDog\Content\Entity\Content;
+use FastDog\Content\Models\Content;
+use FastDog\Core\Interfaces\AdminPrepareEventInterface;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * При редактирование в разделе администрирования
@@ -24,6 +25,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
      * @var Content $item
      */
     protected $item;
+
     /**
      * @var $result array
      */
@@ -45,7 +47,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
     /**
      * @return array
      */
-    public function getResult()
+    public function getResult(): array
     {
         return $this->result;
     }
@@ -53,7 +55,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
     /**
      * @param array $result
      */
-    public function setResult($result)
+    public function setResult(array $result): void
     {
         $this->result = $result;
     }
@@ -61,7 +63,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
     /**
      * @return Content
      */
-    public function getItem()
+    public function getItem(): Model
     {
         return $this->item;
     }
@@ -69,7 +71,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
     /**
      * @return array
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->data;
     }
@@ -78,7 +80,7 @@ class ContentAdminPrepare implements AdminPrepareEventInterface
      * @param $data
      * @return void
      */
-    public function setData($data)
+    public function setData(array $data): void
     {
         $this->data = $data;
     }

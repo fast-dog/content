@@ -2,12 +2,11 @@
 
 namespace FastDog\Content\Listeners;
 
-use App\Core\BaseModel;
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Events\ContentAdminListPrepare as ContentAdminListPrepareEvent;
-use Illuminate\Http\Request;
-use  App\Core\Module\ModuleManager;
 
+use FastDog\Content\Events\ContentAdminListPrepare as ContentAdminListPrepareEvent;
+use FastDog\Core\Models\BaseModel;
+use FastDog\Core\Models\DomainManager;
+use Illuminate\Http\Request;
 /**
  * Обработка элеметнов списка в разделе администратора
  *

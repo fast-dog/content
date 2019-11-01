@@ -2,12 +2,8 @@
 
 namespace FastDog\Content\Listeners\Category;
 
-use App\Core\BaseModel;
-use App\Core\Module\ModuleManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCategory;
 use FastDog\Content\Events\Category\ContentCategoryPrepare as EventContentCategoryPrepare;
-use App\Modules\Media\Entity\GalleryItem;
+use FastDog\Content\Models\Content;
 use Illuminate\Http\Request;
 
 /**

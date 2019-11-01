@@ -3,7 +3,7 @@
 namespace FastDog\Content\Events\Category;
 
 
-use FastDog\Content\Entity\ContentCategory;
+use FastDog\Content\Models\ContentCategory;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -21,7 +21,7 @@ class ContentCategoryPrepare
     protected $data = [];
 
     /**
-     * @var Content
+     * @var ContentCategory
      */
     protected $item;
 
@@ -37,7 +37,7 @@ class ContentCategoryPrepare
     }
 
     /**
-     * @return Content
+     * @return ContentCategory
      */
     public function getItem()
     {

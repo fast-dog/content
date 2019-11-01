@@ -2,14 +2,13 @@
 
 namespace FastDog\Content\Listeners\Category;
 
-use App\Core\Notifications;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCanonical;
-use FastDog\Content\Entity\ContentCategory;
 use FastDog\Content\Events\Category\ContentCategoryAdminBeforeSave as EventContentCategoryAdminBeforeSave;
-
-use App\Modules\Menu\Entity\Menu;
-use App\Modules\Users\Entity\User;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Models\Notifications;
+use FastDog\Menu\Models\Menu;
+use FastDog\User\Models\User;
 use Illuminate\Http\Request;
 
 /**

@@ -2,12 +2,12 @@
 
 namespace FastDog\Content\Listeners;
 
-use App\Core\FormFieldTypes;
-use App\Modules\Catalog\Entity\CatalogItems;
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCategory;
+
+use FastDog\Content\Content;
 use FastDog\Content\Events\ContentAdminPrepare as EventContentAdminPrepare;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Models\DomainManager;
+use FastDog\Core\Models\FormFieldTypes;
 use Illuminate\Http\Request;
 
 /**
@@ -51,24 +51,24 @@ class ContentItemAdminSetEditorForm
             'tabs' => (array)[
                 (object)[
                     'id' => 'catalog-item-general-tab',
-                    'name' => trans('app.Основная информация'),
+                    'name' => trans('content::forms.general.title'),
                     'active' => true,
                     'fields' => (array)[
                         [
-                            'id' => CatalogItems::NAME,
+                            'id' => Content::NAME,
                             'type' => FormFieldTypes::TYPE_TEXT,
-                            'name' => CatalogItems::NAME,
-                            'label' => trans('app.Название'),
+                            'name' => Content::NAME,
+                            'label' => trans('content::forms.fields.name'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                             'required' => true,
                             'validate' => 'required|min:5',
                         ],
                         [
-                            'id' => CatalogItems::ALIAS,
+                            'id' => Content::ALIAS,
                             'type' => FormFieldTypes::TYPE_TEXT_ALIAS,
-                            'name' => CatalogItems::ALIAS,
-                            'label' => trans('app.Псевдоним'),
+                            'name' => Content::ALIAS,
+                            'label' => trans('content::forms.fields.alias'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                         ],
@@ -76,12 +76,12 @@ class ContentItemAdminSetEditorForm
                             'id' => 'canonical',
                             'type' => FormFieldTypes::TYPE_SEARCH,
                             'name' => 'canonical',
-                            'label' => trans('app.Каноническая ссылка'),
+                            'label' => trans('content::forms.fields.canonical_link'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                             'readonly' => true,
                             'data_url' => 'public/content/canonicals',
-                            'title' => trans('app.Существующие канонические ссылки'),
+                            'title' => trans('content::forms.fields.canonical_link_exists'),
                             'filter' => [
                                 'id' => $item->id,
                             ],
@@ -91,33 +91,33 @@ class ContentItemAdminSetEditorForm
                             'tabs' => [
                                 [
                                     'id' => 'catalog-item-introtext-tab',
-                                    'name' => trans('app.Вступительный текст'),
+                                    'name' => trans('content::forms.fields.introtext'),
                                     'active' => true,
                                     'fields' => [
                                         [
-                                            'id' => CatalogItems::INTROTEXT,
+                                            'id' => Content::INTROTEXT,
                                             'type' => FormFieldTypes::TYPE_HTML_EDITOR,
-                                            'name' => CatalogItems::INTROTEXT,
+                                            'name' => Content::INTROTEXT,
                                             'label' => '',
                                         ],
                                     ],
                                 ],
                                 [
                                     'id' => 'catalog-item-fulltext-tab',
-                                    'name' => trans('app.Полный текст'),
+                                    'name' => trans('content::forms.fields.fulltext'),
                                     'active' => false,
                                     'fields' => [
                                         [
-                                            'id' => CatalogItems::FULLTEXT,
+                                            'id' => Content::FULLTEXT,
                                             'type' => FormFieldTypes::TYPE_HTML_EDITOR,
-                                            'name' => CatalogItems::FULLTEXT,
+                                            'name' => Content::FULLTEXT,
                                             'label' => '',
                                         ],
                                     ],
                                 ],
                                 [
                                     'id' => 'catalog-item-tabs-tab',
-                                    'name' => trans('app.Редактор табов'),
+                                    'name' => trans('content::forms.fields.tabs'),
                                     'active' => false,
                                     'fields' => [
                                         [
@@ -133,43 +133,43 @@ class ContentItemAdminSetEditorForm
                     ],
                     'side' => [
                         [
-                            'id' => CatalogItems::SITE_ID,
+                            'id' => Content::SITE_ID,
                             'type' => FormFieldTypes::TYPE_SELECT,
-                            'name' => CatalogItems::SITE_ID,
-                            'label' => trans('app.Доступ'),
+                            'name' => Content::SITE_ID,
+                            'label' => trans('content::forms.fields.access'),
                             'items' => DomainManager::getAccessDomainList(),
                             'css_class' => 'col-sm-12',
                             'active' => DomainManager::checkIsDefault(),
                         ],
                         [
-                            'id' => CatalogItems::STATE,
+                            'id' => Content::STATE,
                             'type' => FormFieldTypes::TYPE_SELECT,
-                            'name' => CatalogItems::STATE,
-                            'label' => trans('app.Состояние'),
+                            'name' => Content::STATE,
+                            'label' => trans('content::forms.fields.state'),
                             'css_class' => 'col-sm-12',
                             'items' => Content::getStatusList(),
                         ],
                         [
-                            'id' => CatalogItems::CATEGORY_ID,
+                            'id' => Content::CATEGORY_ID,
                             'type' => FormFieldTypes::TYPE_SELECT,
-                            'name' => CatalogItems::CATEGORY_ID,
-                            'label' => trans('app.Категория'),
+                            'name' => Content::CATEGORY_ID,
+                            'label' => trans('content::forms.fields.category'),
                             'css_class' => 'col-sm-12',
                             'items' => ContentCategory::getCategoryList(true),
                         ],
                         [
-                            'id' => CatalogItems::CREATED_AT,
+                            'id' => Content::CREATED_AT,
                             'type' => FormFieldTypes::TYPE_DATE,
-                            'name' => CatalogItems::CREATED_AT,
-                            'label' => trans('app.Дата создания'),
+                            'name' => Content::CREATED_AT,
+                            'label' => trans('content::forms.fields.created_at'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                         ],
                         [
-                            'id' => CatalogItems::UPDATED_AT,
+                            'id' => Content::UPDATED_AT,
                             'type' => FormFieldTypes::TYPE_DATE,
-                            'name' => CatalogItems::UPDATED_AT,
-                            'label' => trans('app.Дата обновления'),
+                            'name' => Content::UPDATED_AT,
+                            'label' => trans('content::forms.fields.updated_at'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                             'readonly' => true,
@@ -178,7 +178,7 @@ class ContentItemAdminSetEditorForm
                             'id' => 'published_at',
                             'type' => FormFieldTypes::TYPE_DATE,
                             'name' => 'published_at',
-                            'label' => trans('app.Дата публикации'),
+                            'label' => trans('content::forms.fields.published_at'),
                             'css_class' => 'col-sm-12',
                             'form_group' => true,
                             'readonly' => true,
@@ -187,7 +187,7 @@ class ContentItemAdminSetEditorForm
                 ],
                 (object)[
                     'id' => 'catalog-item-media-tab',
-                    'name' => trans('app.Медиа материалы'),
+                    'name' => trans('content::forms.media.title'),
                     'active' => false,
                     'fields' => [
                         [
@@ -197,7 +197,7 @@ class ContentItemAdminSetEditorForm
                 ],
                 (object)[
                     'id' => 'catalog-item-seo-tab',
-                    'name' => trans('app.Поисковая оптимизация'),
+                    'name' => trans('content::forms.seo.title'),
                     'fields' => [
                         [
                             'type' => FormFieldTypes::TYPE_COMPONENT_SEO,
@@ -206,7 +206,7 @@ class ContentItemAdminSetEditorForm
                 ],
                 (object)[
                     'id' => 'catalog-item-extend-tab',
-                    'name' => trans('app.Дополнительно'),
+                    'name' => trans('content::forms.extend.title'),
                     'fields' => [
                         [
                             'type' => FormFieldTypes::TYPE_COMPONENT_SAMPLE_PROPERTIES,

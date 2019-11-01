@@ -1,22 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 13.04.2018
- * Time: 16:00
- */
 
 namespace FastDog\Content\Http\Controllers\Admin\Category;
 
-use App\Core\BaseModel;
-use App\Core\Form\Interfaces\FormControllerInterface;
-use App\Core\Form\Traits\FormControllerTrait;
-use App\Http\Controllers\Controller;
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\ContentCategory;
+
 use FastDog\Content\Events\Category\ContentCategoryAdminAfterSave;
 use FastDog\Content\Events\Category\ContentCategoryAdminBeforeSave;
-use FastDog\Content\Request\AddContentCategory;
+use FastDog\Content\Http\Request\AddContentCategory;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Form\Interfaces\FormControllerInterface;
+use FastDog\Core\Form\Traits\FormControllerTrait;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Models\DomainManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,7 +32,7 @@ class FormController extends Controller implements FormControllerInterface
     public function __construct(ContentCategory $model)
     {
         parent::__construct();
-        $this->page_title = trans('app.Категории');
+        $this->page_title = trans('content::interface.Категории');
         $this->model = $model;
     }
 
@@ -50,7 +44,7 @@ class FormController extends Controller implements FormControllerInterface
     {
         $result = $this->getItemData($request);
 
-        $this->breadcrumbs->push(['url' => '/content/items', 'name' => trans('app.Управление')]);
+        $this->breadcrumbs->push(['url' => '/content/items', 'name' => trans('content::interface.Управление')]);
         $this->breadcrumbs->push(['url' => false, 'name' => $this->item->{ContentCategory::NAME}]);
 
         return $this->json($result, __METHOD__);
@@ -75,7 +69,7 @@ class FormController extends Controller implements FormControllerInterface
         $alias = $request->input(ContentCategory::ALIAS, '#');
 
         if (in_array($alias, ['#'])) {
-            $alias = \Slug::make($request->input(ContentCategory::NAME, ''), '-');
+            $alias = str_slug($request->input(ContentCategory::NAME, ''), '-');
         }
 
         $updateData = [
@@ -86,7 +80,7 @@ class FormController extends Controller implements FormControllerInterface
             ContentCategory::SITE_ID => $request->input(ContentCategory::SITE_ID . '.id', DomainManager::getSiteId()),
         ];
 
-        \Event::fire(new ContentCategoryAdminBeforeSave($updateData));
+        event(new ContentCategoryAdminBeforeSave($updateData));
 
         $item = ContentCategory::find($request->input('id', 0));
 
@@ -118,11 +112,11 @@ class FormController extends Controller implements FormControllerInterface
         } else {
             if ($parent === null) {
                 $parent = ContentCategory::create([
-                    ContentCategory::NAME => trans('app.Родительская категория'),
+                    ContentCategory::NAME => trans('content::interface.Родительская категория'),
                     ContentCategory::SITE_ID => $scopeId,
                     'lft' => 1,
                     'rgt' => 2,
-                    ContentCategory::STATE => BaseModel::STATE_PUBLISHED,
+                    ContentCategory::STATE => ContentCategory::STATE_PUBLISHED,
                 ]);
             }
 
@@ -140,7 +134,7 @@ class FormController extends Controller implements FormControllerInterface
 
         $data = $item->getData();
 
-        \Event::fire(new ContentCategoryAdminAfterSave($data, $item));
+        event(new ContentCategoryAdminAfterSave($data, $item));
 
         return $this->json($result, __METHOD__);
     }
@@ -150,6 +144,7 @@ class FormController extends Controller implements FormControllerInterface
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
     public function postUpdate(Request $request)
     {

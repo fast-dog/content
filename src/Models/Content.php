@@ -16,7 +16,7 @@ use FastDog\Core\Properties\Traits\PropertiesTrait;
 use FastDog\Core\Table\Filters\BaseFilter;
 use FastDog\Core\Table\Filters\Operator\BaseOperator;
 use FastDog\Core\Table\Interfaces\TableModelInterface;
-use FastDog\Menu\Menu;
+use FastDog\Menu\Models\Menu;
 use FastDog\User\User;
 use Illuminate\Support\Collection;
 

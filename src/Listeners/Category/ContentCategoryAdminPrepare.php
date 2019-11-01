@@ -2,12 +2,11 @@
 
 namespace FastDog\Content\Listeners\Category;
 
-use App\Core\BaseModel;
-use App\Core\Module\ModuleManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCategory;
+use FastDog\Content\Content;
 use FastDog\Content\Events\Category\ContentCategoryAdminPrepare as EventContentCategoryAdminPrepare;
-use App\Modules\Media\Entity\GalleryItem;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Models\ModuleManager;
+use FastDog\Media\Models\GalleryItem;
 use Illuminate\Http\Request;
 
 /**
@@ -42,7 +41,7 @@ class ContentCategoryAdminPrepare
         /**
          * @var $moduleManager ModuleManager
          */
-        $moduleManager = \App::make(ModuleManager::class);
+        $moduleManager = app()->make(ModuleManager::class);
         /**
          * @var $item ContentCategory
          */
@@ -56,15 +55,15 @@ class ContentCategoryAdminPrepare
         ];
 
 
-        if (is_string($item->{BaseModel::DATA})) {
-            $item->{BaseModel::DATA} = json_decode($item->{BaseModel::DATA});
+        if (is_string($item->{Content::DATA})) {
+            $item->{Content::DATA} = json_decode($item->{Content::DATA});
         }
-        if (isset($item->{BaseModel::DATA}->{'introtext'})) {
-            $data['introtext'] = $item->{BaseModel::DATA}->{'introtext'};
+        if (isset($item->{Content::DATA}->{'introtext'})) {
+            $data['introtext'] = $item->{Content::DATA}->{'introtext'};
         }
 
-        if (isset($item->{BaseModel::DATA}->{'fulltext'})) {
-            $data['fulltext'] = $item->{BaseModel::DATA}->{'fulltext'};
+        if (isset($item->{Content::DATA}->{'fulltext'})) {
+            $data['fulltext'] = $item->{Content::DATA}->{'fulltext'};
         }
 
         $data['properties'] = $item->properties();

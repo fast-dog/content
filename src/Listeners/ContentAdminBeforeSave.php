@@ -1,14 +1,13 @@
 <?php
-
 namespace FastDog\Content\Listeners;
 
-use App\Core\Notifications;
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentConfig;
 use FastDog\Content\Events\ContentAdminBeforeSave as EventContentAdminBeforeSave;
-use App\Modules\Menu\Entity\Menu;
-use App\Modules\Users\Entity\User;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentConfig;
+use FastDog\Core\Models\DomainManager;
+use FastDog\Core\Models\Notifications;
+use FastDog\Menu\Models\Menu;
+use FastDog\User\Models\User;
 use Illuminate\Http\Request;
 
 /**
@@ -168,7 +167,7 @@ class ContentAdminBeforeSave
          * Преобразование абсолютных адресов в относительные в тексте публикации
          */
         if ($config !== null && $config->can('relative_path')) {
-            $domainList = DomainManager::getAccessDomainList();
+
             $domainList = DomainManager::getAccessDomainList();
             foreach ($domainList as $item) {
                 if ($item['id'] == DomainManager::getSiteId()) {

@@ -2,17 +2,14 @@
 
 namespace FastDog\Content\Listeners;
 
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentComments;
-use FastDog\Content\Entity\ContentConfig;
-use FastDog\Content\Entity\ContentTag;
 use FastDog\Content\Events\ContentPrepare as EventContentPrepare;
-use App\Modules\Form\Entity\FormConfig;
-use App\Modules\Form\Entity\FormManager;
-use App\Modules\Media\Entity\Gallery;
 use DOMDocument;
 use DOMElement;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentComments;
+use FastDog\Content\Models\ContentConfig;
+use FastDog\Content\Models\ContentTag;
+use FastDog\Media\Models\Gallery;
 use Illuminate\Http\Request;
 
 /**

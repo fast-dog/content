@@ -1,9 +1,9 @@
 <?php
-
 namespace FastDog\Content\Events;
 
 
-use FastDog\Content\Entity\Content;
+
+use FastDog\Content\Models\Content;
 
 /**
  * При просмотре материала на сайте

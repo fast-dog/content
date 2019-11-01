@@ -4,9 +4,6 @@ namespace FastDog\Content\Models;
 
 use FastDog\User\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Канонические ссылки

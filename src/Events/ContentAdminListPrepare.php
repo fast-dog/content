@@ -1,5 +1,4 @@
 <?php
-
 namespace FastDog\Content\Events;
 
 

@@ -2,8 +2,7 @@
 
 namespace FastDog\Content\Events\Category;
 
-
-use FastDog\Content\Entity\ContentCategory;
+use FastDog\Content\Models\ContentCategory;
 
 /**
  * После сохранением категории

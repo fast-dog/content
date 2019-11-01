@@ -2,10 +2,11 @@
 
 namespace FastDog\Content\Listeners;
 
-use App\Modules\Config\Entity\DomainManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentTag;
+
 use FastDog\Content\Events\ContentListPrepare as ContentListPrepareEvent;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentTag;
+use FastDog\Core\Models\DomainManager;
 use Illuminate\Http\Request;
 
 /**

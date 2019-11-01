@@ -2,9 +2,8 @@
 
 namespace FastDog\Content\Http\Request;
 
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCategory;
-use App\Modules\Users\Entity\User;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\User\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**

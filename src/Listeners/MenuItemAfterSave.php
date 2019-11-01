@@ -1,20 +1,15 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 18.12.2016
- * Time: 23:33
- */
 
 namespace FastDog\Content\Listeners;
 
 
-use App\Core\Notifications;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCanonical;
-use FastDog\Content\Entity\ContentCategory;
-use App\Modules\Menu\Entity\Menu;
-use App\Modules\Menu\Events\MenuItemAfterSave as MenuItemAfterSaveEvent;
+
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Models\Notifications;
+use FastDog\Menu\Events\MenuItemAfterSave as MenuItemAfterSaveEvent;
+use FastDog\Menu\Models\Menu;
 use Illuminate\Http\Request;
 
 /**

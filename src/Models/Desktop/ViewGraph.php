@@ -1,16 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 18.01.2017
- * Time: 14:33
- */
 
 namespace FastDog\Content\Models\Desktop;
 
 
-use App\Core\Interfaces\DesktopWidget;
 use FastDog\Content\Models\ContentStatistic;
+use FastDog\Core\Interfaces\DesktopWidget;
 
 /**
  * Блок графика
@@ -35,7 +29,7 @@ class ViewGraph implements DesktopWidget
      *
      * @return mixed
      */
-    public function getData()
+    public function getData(): array
     {
         return ContentStatistic::getStatistic();
     }
@@ -46,7 +40,7 @@ class ViewGraph implements DesktopWidget
      * @param array $data
      * @return mixed
      */
-    public function setData(array $data)
+    public function setData(array $data): void
     {
         $this->config = $data;
     }

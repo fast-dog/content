@@ -1,17 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dg
- * Date: 12.04.2018
- * Time: 9:34
- */
-
 namespace FastDog\Content\Http\Controllers\Admin\Category;
 
-use App\Core\Table\Interfaces\TableControllerInterface;
-use App\Core\Table\Traits\TableTrait;
-use App\Http\Controllers\Controller;
-use FastDog\Content\Entity\ContentCategory;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Http\Controllers\Controller;
+use FastDog\Core\Table\Interfaces\TableControllerInterface;
+use FastDog\Core\Table\Traits\TableTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,7 +32,7 @@ class TableController extends Controller implements TableControllerInterface
     /**
      * Модель по которой будет осуществляться выборка данных
      *
-     * @var \FastDog\Content\Entity\ContentCategory|null $model
+     * @var \FastDog\Content\Models\ContentCategory|null $model
      */
     protected $model = null;
 
@@ -52,9 +45,7 @@ class TableController extends Controller implements TableControllerInterface
         parent::__construct();
         $this->model = $model;
 
-        $this->accessKey = $this->model->getAccessKey();
-
-        $this->page_title = trans('app.Материалы');
+        $this->page_title = trans('content::interface.Категории');
         $this->initTable('tree');
     }
 
@@ -87,7 +78,7 @@ class TableController extends Controller implements TableControllerInterface
     public function list(Request $request): JsonResponse
     {
         $result = self::paginate($request);
-        $this->breadcrumbs->push(['url' => false, 'name' => trans('app.Категории')]);
+        $this->breadcrumbs->push(['url' => false, 'name' => trans('content::interface.Категории')]);
 
         return $this->json($result, __METHOD__);
     }

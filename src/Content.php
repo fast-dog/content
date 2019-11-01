@@ -5,9 +5,6 @@ use DOMDocument;
 use FastDog\Config\Models\Translate;
 use FastDog\Content\Models\Content as ContentModel;
 use FastDog\Content\Models\ContentCategory;
-
-;
-
 use FastDog\Content\Http\Controllers\Site\ContentController;
 use FastDog\Core\Models\Cache;
 use FastDog\Core\Models\Components;

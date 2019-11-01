@@ -1,14 +1,13 @@
 <?php
-
 namespace FastDog\Content\Listeners;
 
-use App\Core\Module\ModuleManager;
-use FastDog\Content\Entity\Content;
-use FastDog\Content\Entity\ContentCanonical;
-use FastDog\Content\Entity\ContentCategory;
+
 use FastDog\Content\Events\ContentAdminPrepare as EventContentAdminPrepare;
-use App\Modules\Media\Entity\GalleryItem;
-use App\Modules\Search\Entity\SearchIndex;
+use FastDog\Content\Models\Content;
+use FastDog\Content\Models\ContentCanonical;
+use FastDog\Content\Models\ContentCategory;
+use FastDog\Core\Models\ModuleManager;
+use FastDog\Media\Models\GalleryItem;
 use Illuminate\Http\Request;
 
 /**
@@ -43,7 +42,7 @@ class ContentAdminPrepare
         /**
          * @var $moduleManager ModuleManager
          */
-        $moduleManager = \App::make(ModuleManager::class);
+        $moduleManager = app()->make(ModuleManager::class);
         $item = $event->getItem();
         $data = $event->getData();
         $data['canonical'] = '';
@@ -51,21 +50,21 @@ class ContentAdminPrepare
             GalleryItem::PARENT_TYPE => GalleryItem::TYPE_CONTENT_IMAGE,
             GalleryItem::PARENT_ID => (isset($item->id)) ? $item->id : 0,
         ];
-        $data['files_module'] = ($moduleManager->hasModule('App\Modules\Media\Media')) ? 'Y' : 'N';
-        $data['forms_module'] = ($moduleManager->hasModule('App\Modules\Form\Form')) ? 'Y' : 'N';
+        $data['files_module'] = ($moduleManager->hasModule('media')) ? 'Y' : 'N';
+        $data['forms_module'] = ($moduleManager->hasModule('form')) ? 'Y' : 'N';
 
         $data['properties'] = $item->properties();
         $data['media'] = $item->getMedia();
 
 
-        $searchIndex = SearchIndex::where([
-            SearchIndex::TYPE => SearchIndex::TYPE_CONTENT,
-            SearchIndex::ITEM_ID => $item->id,
-        ])->first();
-
-        if ($searchIndex) {
-            $data['data']->search_index = $searchIndex->{SearchIndex::TEXT};
-        }
+//        $searchIndex = SearchIndex::where([
+//            SearchIndex::TYPE => SearchIndex::TYPE_CONTENT,
+//            SearchIndex::ITEM_ID => $item->id,
+//        ])->first();
+//
+//        if ($searchIndex) {
+//            $data['data']->search_index = $searchIndex->{SearchIndex::TEXT};
+//        }
         if ($item->id === null) {
             $data[Content::ALIAS] = '#';
         }

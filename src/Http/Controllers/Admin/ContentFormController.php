@@ -163,6 +163,7 @@ class ContentFormController extends Controller implements FormControllerInterfac
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
+     * @deprecated
      */
     public function postCanonicals(Request $request)
     {

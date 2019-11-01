@@ -2,9 +2,10 @@
 
 namespace FastDog\Content\Listeners\Category;
 
-use App\Core\BaseModel;
-use App\Modules\Config\Entity\DomainManager;
+
 use FastDog\Content\Events\Category\ContentAdminListPrepare as ContentAdminListPrepareEvent;
+use FastDog\Core\Models\BaseModel;
+use FastDog\Core\Models\DomainManager;
 use Illuminate\Http\Request;
 
 /**
