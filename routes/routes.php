@@ -158,49 +158,50 @@ Route::group([
 //        ]));
     }
 );
-
-/** @var array $publicRoute */
-$publicRoute = app()->make(\FastDog\Core\Models\Cache::class)->get('content-' . DomainManager::getSiteId(), function () {
-    $result = [];
-    Menu::where(function (Builder $query) {
-        $query->whereRaw(\DB::raw('data->"$.type" = \'content_blog\''));
-        $query->where(Menu::STATE, Menu::STATE_PUBLISHED);
-        $query->where(Menu::SITE_ID, DomainManager::getSiteId());
-    })
-        ->get()
-        ->each(function (Menu $item) use (&$result) {
-            array_push($result, $item);
-        });
-}, ['content']);
-
-
-if ($publicRoute) {
-    /** @var Menu $menuItem */
-    foreach ($data as $menuItem) {
-        \Route::get($menuItem->getRoute() . '/', function (Request $request, $id, $alias, $page = null) use ($menuItem) {
-            $request->merge([
-                'active_ids' => $menuItem->id,
-            ]);
-            /**
-             * @var $contentItem Content
-             */
-            $contentItem = Content::where([
-                Content::ALIAS => $alias,
-                'id' => $id,
-            ])->first();
+if (false === app()->runningInConsole()) {
+    /** @var array $publicRoute */
+    $publicRoute = app()->make(\FastDog\Core\Models\Cache::class)->get('content-' . DomainManager::getSiteId(), function () {
+        $result = [];
+        Menu::where(function (Builder $query) {
+            $query->whereRaw(\DB::raw('data->"$.type" = \'content_blog\''));
+            $query->where(Menu::STATE, Menu::STATE_PUBLISHED);
+            $query->where(Menu::SITE_ID, DomainManager::getSiteId());
+        })
+            ->get()
+            ->each(function (Menu $item) use (&$result) {
+                array_push($result, $item);
+            });
+    }, ['content']);
 
 
-            if (!$contentItem) {
-                $menuItem->error();
-                abort(404);
-            }
-            $controller = app()->make('\FastDog\Content\Controllers\Site\ContentController');
+    if ($publicRoute) {
+        /** @var Menu $menuItem */
+        foreach ($data as $menuItem) {
+            \Route::get($menuItem->getRoute() . '/', function (Request $request, $id, $alias, $page = null) use ($menuItem) {
+                $request->merge([
+                    'active_ids' => $menuItem->id,
+                ]);
+                /**
+                 * @var $contentItem Content
+                 */
+                $contentItem = Content::where([
+                    Content::ALIAS => $alias,
+                    'id' => $id,
+                ])->first();
 
-            return $controller->callAction('getItem', [
-                ['request' => $request, 'menuItem' => $menuItem, 'contentItem' => $contentItem],
-            ]);
-        });
+
+                if (!$contentItem) {
+                    $menuItem->error();
+                    abort(404);
+                }
+                $controller = app()->make('\FastDog\Content\Controllers\Site\ContentController');
+
+                return $controller->callAction('getItem', [
+                    ['request' => $request, 'menuItem' => $menuItem, 'contentItem' => $contentItem],
+                ]);
+            });
+        }
     }
-}
 
-\Route::post('/content/add-comment/{item_id}', '\FastDog\Content\Controllers\Site\ContentController@postAddComment');
+    \Route::post('/content/add-comment/{item_id}', '\FastDog\Content\Controllers\Site\ContentController@postAddComment');
+}
