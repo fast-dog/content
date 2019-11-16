@@ -8,6 +8,7 @@ use DOMElement;
 use FastDog\Core\Media\Interfaces\MediaInterface;
 use FastDog\Core\Media\Traits\MediaTraits;
 use FastDog\Core\Models\BaseModel;
+use FastDog\Core\Models\Cache;
 use FastDog\Core\Models\DomainManager;
 use FastDog\Core\Models\Notifications;
 use FastDog\Core\Properties\BaseProperties;
@@ -395,24 +396,9 @@ class Content extends BaseModel implements /*SearchResult,*/
      */
     public function getPublicConfig()
     {
-        $key = __METHOD__ . '::' . DomainManager::getSiteId() . '::module-content-public';
-        $isRedis = config('cache.default') == 'redis';
-
-        $config = ($isRedis) ? \Cache::tags(['config'])->get($key, null) : \Cache::get($key, null);
-        if (null === $config) {
-            /**
-             * @var $config ContentConfig
-             */
-            $config = ContentConfig::where(ContentConfig::ALIAS, ContentConfig::CONFIG_PUBLIC)->first();
-
-            if ($isRedis) {
-                \Cache::tags(['config'])->put($key, $config, config('cache.ttl_config', 5));
-            } else {
-                \Cache::put($key, $config, config('cache.ttl_config', 5));
-            }
-        }
-
-        return $config;
+        return app()->make(Cache::class)->get(__METHOD__ . '::' . DomainManager::getSiteId() . '::module-content-public', function() {
+            return ContentConfig::where(ContentConfig::ALIAS, ContentConfig::CONFIG_PUBLIC)->first();
+        }, ['config']);
     }
 
     /**

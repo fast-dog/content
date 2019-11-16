@@ -6,6 +6,7 @@ namespace FastDog\Content\Listeners;
 use FastDog\Content\Events\ContentListPrepare as ContentListPrepareEvent;
 use FastDog\Content\Models\Content;
 use FastDog\Content\Models\ContentTag;
+use FastDog\Core\Models\Cache;
 use FastDog\Core\Models\DomainManager;
 use Illuminate\Http\Request;
 
@@ -45,14 +46,7 @@ class ContentListPrepare
         $key = __METHOD__ . '::' . DomainManager::getSiteId() . '::' .
             $data['menuItem']->id . '-page-' . $this->request->input('page', 1);
 
-        $isRedis = config('cache.default') == 'redis';
-
-        $items = ($isRedis) ? \Cache::tags(['events'])->get($key, null) : \Cache::get($key, null);
-        $items = null;
-        if ($items === null) {
-            /**
-             * @var $item Content
-             */
+        $data['items'] = app()->make(Cache::class)->get($key, function() use ($data) {
             foreach ($data['items'] as &$item) {
                 $_tags = [];
                 $tags = ContentTag::where(ContentTag::ITEM_ID, $item['id'])->limit(3)->orderBy(\DB::raw('RAND()'))->get();
@@ -61,17 +55,11 @@ class ContentListPrepare
                         $tag->{ContentTag::TEXT} . '</a>');
                 }
                 $item['tags'] = $_tags;
-              Content::prepareText($item, [Content::INTROTEXT], $item['item']);
+                Content::prepareText($item, [Content::INTROTEXT], $item['item']);
             }
 
-            if ($isRedis) {
-                \Cache::tags(['events'])->put($key, $data['items'], config('cache.content.event', 5));
-            } else {
-                \Cache::put($key, $items, config('cache.content.event', 5));
-            }
-        } else {
-            $data['items'] = $items;
-        }
+        }, ['events']);
+
         if (config('app.debug')) {
             $data['_events'][] = __METHOD__;
         }
